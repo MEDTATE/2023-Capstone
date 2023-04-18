@@ -1,0 +1,15 @@
+texture0 = $MSAAColorBuffer
+
+VertexShaderFile    = sprite.fx
+VertexShaderMain    = VSMain
+VertexShaderProfile = vs_4_0
+
+GeometryShaderFile     = sprite.fx
+GeometryShaderMain     = GSMain
+GeometryShaderProfile  = gs_4_0
+
+PixelShaderFile     = sprite.fx
+PixelShaderMain     = PSMain
+PixelShaderProfile  = ps_4_0
+
+RenderStateFile     = sprite.rs

@@ -1,0 +1,14 @@
+// Created with FBXConvert.exe (Sep 10 2013 16:36:18)
+[node 0]
+type = model
+name = smallPlantsCombined
+parent = -1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = 96.29393291473389 1.617653250694275 -4.625259399414063 
+BoundingBoxHalf = 103.8262147903442 4.736916184425354 104.7538146972656 
+meshcount = 1
+material0 = PRP_ShrubSmall_DM_A
+//Duration: ( 232232300 ns)

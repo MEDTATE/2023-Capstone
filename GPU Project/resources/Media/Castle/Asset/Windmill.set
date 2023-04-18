@@ -1,0 +1,159 @@
+// Created with FBXConvert.exe (Aug 20 2013 11:04:13)
+[node 0]
+type = null
+name = windMillGrp
+parent = -1
+matrixRow0 = 1.224646799147353e-016 0 -2 0
+matrixRow1 = 0 2 0 0
+matrixRow2 = 2 0 1.224646799147353e-016 0
+matrixRow3 = 93.9467458523421 5.691288948059082 -3.186848169391804 1
+[node 1]
+type = null
+name = windMillBaseGrp
+parent = 0
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+[node 2]
+type = model
+name = windMill6D1
+parent = 1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.09405779838562012 5.775080054998398 1.038590431213379 
+BoundingBoxHalf = 3.423226118087769 5.778947502374649 3.215180397033691 
+meshcount = 1
+material0 = marketStallMaterial14
+[node 3]
+type = model
+name = windMill6D2
+parent = 1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1747865676879883 5.726240158081055 1.050210237503052 
+BoundingBoxHalf = 3.42029070854187 5.726240158081055 3.103808164596558 
+meshcount = 1
+material0 = wallPieces_wallPieces_group10_mergedSG1
+[node 4]
+type = model
+name = windMill6D3
+parent = 1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.104774534702301 12.25338554382324 -0.1364888548851013 
+BoundingBoxHalf = 1.724814474582672 0.9039011001586914 1.877847969532013 
+meshcount = 1
+material0 = marketStallMaterial6
+[node 5]
+type = model
+name = windMill6D4
+parent = 1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1070556640625 11.80927658081055 0.07810878753662109 
+BoundingBoxHalf = 1.706581115722656 0.5157661437988281 1.638023376464844 
+meshcount = 1
+material0 = marketStallMaterial
+[node 6]
+type = model
+name = windMill6D5
+parent = 1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.08912211656570435 12.04583597183228 -0.5015408098697662 
+BoundingBoxHalf = 1.158675849437714 0.3885617256164551 1.468393176794052 
+meshcount = 1
+material0 = marketStallMaterial18
+[node 7]
+type = model
+name = windMill6D6
+parent = 1
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1411609649658203 12.88155269622803 -0.8420560359954834 
+BoundingBoxHalf = 0.8734745979309082 0.2757339477539063 0.5484364032745361 
+meshcount = 1
+material0 = marketStallMaterial8
+[node 8]
+type = null
+name = windMillRotateGrp
+parent = 0
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+Animation0 = Default
+[node 9]
+type = model
+name = windMillRot
+parent = 8
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1482915878295898 11.97203540802002 -3.044159054756165 
+BoundingBoxHalf = 8.878813743591309 8.883728981018066 0.1683071851730347 
+meshcount = 1
+material0 = marketStallMaterial14
+[node 10]
+type = model
+name = windMillRot1
+parent = 8
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1482915878295898 11.97002696990967 -2.994105219841003 
+BoundingBoxHalf = 7.610456466674805 7.617379188537598 0.1764222383499146 
+meshcount = 1
+material0 = marketStallMaterial6
+[node 11]
+type = model
+name = windMillRot2
+parent = 8
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1568493843078613 11.94817686080933 -3.043444395065308 
+BoundingBoxHalf = 1.042504787445068 1.042516231536865 0.3155713081359863 
+meshcount = 1
+material0 = marketStallMaterial20
+[node 12]
+type = model
+name = windMillRot3
+parent = 8
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.1449710130691528 11.95078945159912 -0.5221793055534363 
+BoundingBoxHalf = 0.4086881875991821 0.4018735885620117 1.812956392765045 
+meshcount = 1
+material0 = marketStallMaterial7
+[node 13]
+type = model
+name = windMillRot4
+parent = 8
+matrixRow0 = 1 0 -0 0
+matrixRow1 = -0 1 -0 0
+matrixRow2 = 0 0 1 0
+matrixRow3 = 0 0 -0 1
+BoundingBoxCenter = -0.14687579870224 11.94738054275513 -1.859398365020752 
+BoundingBoxHalf = 0.1188463568687439 0.1188464164733887 1.651170015335083 
+meshcount = 1
+material0 = marketStallMaterial8
+//Duration: ( 312308900 ns)

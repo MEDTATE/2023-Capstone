@@ -1,0 +1,5 @@
+diffuse =  texture( name="texture_DM", uv=uv0 * 1 )
+specularTmp =  texture( name="texture_SM", uv=uv0 * 1 )
+normal =  (texture( name="texture_NM", uv=uv0 * 1 ) *2 -1)
+specular = (specularTmp * 1)
+ambient = diffuse

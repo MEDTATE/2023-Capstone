@@ -1,0 +1,10 @@
+Texture0 = WantedPoster.dds
+Texture1 = posterNM.dds
+texture1Srgb = false
+VertexShaderFile    = DefaultShaderAlpha.fx
+VertexShaderMain    = VSMain
+VertexShaderProfile = vs_4_0
+PixelShaderFile     = DefaultShaderAlpha.fx
+PixelShaderMain     = PSMain
+PixelShaderProfile  = ps_4_0
+RenderStateFile     = DefaultAlpha.rs

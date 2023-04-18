@@ -1,0 +1,15 @@
+texture0 = $SceneColor2
+
+VertexShaderFile    = ResolveSprite.fx
+VertexShaderMain    = VSMain
+VertexShaderProfile = vs_5_0
+
+GeometryShaderFile     = ResolveSprite.fx
+GeometryShaderMain     = GSMain
+GeometryShaderProfile  = gs_5_0
+
+PixelShaderFile     = ResolveSprite.fx
+PixelShaderMain     = PSMain
+PixelShaderProfile  = ps_5_0
+
+RenderStateFile     = sprite.rs

@@ -1,0 +1,18 @@
+ReceiveShadows      = false
+
+texture0            = $PostProcessDownSample4x4
+
+VertexShaderFile    = PostProcess/PostProcess.hlsl
+VertexShaderMain    = VSMain
+VertexShaderProfile = vs_4_0
+
+GeometryShaderFile     = PostProcess/PostProcess.hlsl
+GeometryShaderMain     = GSMain
+GeometryShaderProfile  = gs_4_0
+
+PixelShaderFile     = PostProcess/PostProcess.hlsl
+PixelShaderMain     = PS_BrightPass
+PixelShaderProfile  = ps_4_0
+
+RenderStateFile     = PostProcess/Default.rs
+

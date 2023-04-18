@@ -1,0 +1,42 @@
+// Created with FBXConvert.exe (Sep 10 2013 16:36:18)
+[node 0]
+type = camera
+name = startCam
+parent = -1
+matrixRow0 = 0.7277604724765829 -2.911248566881087e-017 -0.6858313894104445 0
+matrixRow1 = -0.1460511240628602 0.977062039865697 -0.1549801258660566 0
+matrixRow2 = 0.6700998163412939 0.2129548549657502 0.7110671317715933 0
+matrixRow3 = 56.82829322629527 6.731564743453856 -39.83622216075826 1
+projectiontype = perspective
+InterestPosition = 74.99010832327031 12.50331188555609 -20.56406381383729 
+FieldOfView = 54.431472237763 
+NearPlane = 0.1 
+FarPlane = 10000 
+FilmAspectRatio = 1.49994708434755 
+AspectWidth = 1280 
+AspectHeight = 720 
+UseDepthOfField = false
+FocusDistance = 5 
+[node 1]
+type = light
+name = directionalLight1
+parent = -1
+matrixRow0 = 0.1955038283455803 0.3483416695120546 7.796883111448722 0
+matrixRow1 = -6.338407281446038 -4.543627459844839 0.3619289431177627 0
+matrixRow2 = 4.553824909548524 -6.339168518554783 0.1690298960239961 0
+matrixRow3 = 1.862360028390853 13.77218870850975 -0 1
+lighttype = directional
+decay = none
+Color = 1 1 1 
+Intensity = 100 
+InnerAngle = 0 
+OuterAngle = 45 
+DecayStart = 0 
+EnableNearAttenuation = false
+EnableFarAttenuation = false
+NearAttenuationStart = 0 
+NearAttenuationEnd = 0 
+FarAttenuationStart = 0 
+FarAttenuationEnd = 0 
+CastShadows = false
+//Duration: ( 19018300 ns)
