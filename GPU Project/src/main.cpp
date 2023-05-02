@@ -111,7 +111,10 @@ int main()
     // -------------------------
     //Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
     //Shader modelShader("shader/fxaa.vs", "shader/fxaa.fs");
-    Shader modelShader("shader/FXAA_2.vs", "shader/FXAA_2.fs");
+    Shader modelShader("shader/FXAA.vert", "shader/FXAA_Default.frag");
+    //Shader SMAA_EdgeDetection("shader/smaaEdge.vs", "shader/smaaEdge.fs");
+    //Shader SMAA_BlendingWeight();
+    //Shader SMAA_NeighborhoodBlending();
 
     // load models
     // -----------

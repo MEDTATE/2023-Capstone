@@ -158,9 +158,15 @@
     <None Include="shader\basicModel.fs" />
     <None Include="shader\basicModel.vs" />
     <None Include="shader\fxaa.fs" />
+    <None Include="shader\FXAA.vert" />
     <None Include="shader\fxaa.vs" />
-    <None Include="shader\FXAA_2.fs" />
-    <None Include="shader\FXAA_2.vs" />
+    <None Include="shader\FXAA_Default.frag" />
+    <None Include="shader\smaaBlendWeight.frag" />
+    <None Include="shader\smaaBlendWeight.vert" />
+    <None Include="shader\smaaEdge.frag" />
+    <None Include="shader\smaaEdge.vert" />
+    <None Include="shader\smaaNeighbor.frag" />
+    <None Include="shader\smaaNeighbor.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\fxaa3_11.h" />

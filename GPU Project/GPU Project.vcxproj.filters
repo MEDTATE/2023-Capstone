@@ -68,10 +68,28 @@
     <None Include="shader\fxaa.vs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\FXAA_2.vs">
+    <None Include="shader\smaaEdge.frag">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\FXAA_2.fs">
+    <None Include="shader\smaaEdge.vert">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaNeighbor.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaNeighbor.vert">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaBlendWeight.frag">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaBlendWeight.vert">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\FXAA.vert">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\FXAA_Default.frag">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
