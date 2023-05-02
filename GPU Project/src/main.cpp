@@ -37,6 +37,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+bool temp = false;
+
 int main()
 {
     // glfw: initialize and configure
@@ -105,16 +107,15 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // enable to test MSAA
-    //glEnable(GL_MULTISAMPLE);
+    glEnable(GL_MULTISAMPLE);
 
     // build and compile shaders
     // -------------------------
-    //Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
-    //Shader modelShader("shader/fxaa.vs", "shader/fxaa.fs");
-    Shader modelShader("shader/FXAA.vert", "shader/FXAA_Default.frag");
-    //Shader SMAA_EdgeDetection("shader/smaaEdge.vs", "shader/smaaEdge.fs");
-    //Shader SMAA_BlendingWeight();
-    //Shader SMAA_NeighborhoodBlending();
+    Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
+    Shader fxaaShader("shader/FXAA.vert", "shader/FXAA_Default.frag");
+ 
+    // set default shader to modelShader
+    Shader selectedShader = modelShader;
 
     // load models
     // -----------
@@ -188,21 +189,28 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+        if (temp) {
+            selectedShader = fxaaShader;
+        }
+        else {
+            selectedShader = modelShader;
+        }
+
         // don't forget to enable shader before setting uniforms
-        modelShader.use();
+        selectedShader.use();
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        modelShader.setMat4("projection", projection);
-        modelShader.setMat4("view", view);
+        selectedShader.setMat4("projection", projection);
+        selectedShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// it's a bit too big for our scene, so scale it down
-        modelShader.setMat4("model", model);
-        container.Draw(modelShader);
+        selectedShader.setMat4("model", model);
+        container.Draw(selectedShader);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -235,6 +243,16 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !temp)
+    {
+        temp = true;
+        printf("KEY PRESSED!\n");
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
+    {
+        temp = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
