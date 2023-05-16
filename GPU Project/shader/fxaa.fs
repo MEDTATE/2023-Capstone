@@ -379,6 +379,18 @@ NOTE the other tuning knobs are now in the shader function inputs!
     #define FxaaInt2 ivec2
     #define FxaaSat(x) clamp(x, 0.0, 1.0)
     #define FxaaTex sampler2D
+#else
+    #define FxaaBool bool
+    #define FxaaDiscard clip(-1)
+    #define FxaaFloat float
+    #define FxaaFloat2 float2
+    #define FxaaFloat3 float3
+    #define FxaaFloat4 float4
+    #define FxaaHalf half
+    #define FxaaHalf2 half2
+    #define FxaaHalf3 half3
+    #define FxaaHalf4 half4
+    #define FxaaSat(x) saturate(x)
 #endif
 /*--------------------------------------------------------------------------*/
 #if (FXAA_GLSL_120 == 1)
