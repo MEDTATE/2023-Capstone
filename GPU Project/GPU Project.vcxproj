@@ -157,6 +157,10 @@
   <ItemGroup>
     <None Include="shader\basicModel.fs" />
     <None Include="shader\basicModel.vs" />
+    <None Include="shader\basicScreen.fs" />
+    <None Include="shader\basicScreen.vs" />
+    <None Include="shader\cmaa.fs" />
+    <None Include="shader\cmaa.vs" />
     <None Include="shader\fxaa.fs" />
     <None Include="shader\FXAA.vert" />
     <None Include="shader\fxaa.vs" />
