@@ -157,12 +157,15 @@
   <ItemGroup>
     <None Include="shader\basicModel.fs" />
     <None Include="shader\basicModel.vs" />
-    <None Include="shader\cmaa.fs" />
     <None Include="shader\cmaa.vs" />
     <None Include="shader\fxaa.fs" />
-    <None Include="shader\FXAA.vert" />
     <None Include="shader\fxaa.vs" />
-    <None Include="shader\FXAA_Default.frag" />
+    <None Include="shader\PostProcessingCMAA_Common.glsl" />
+    <None Include="shader\PostProcessingCMAA_DbgDisplayEdgesPS.fs" />
+    <None Include="shader\PostProcessingCMAA_Edges0PS.fs" />
+    <None Include="shader\PostProcessingCMAA_Edges1PS.fs" />
+    <None Include="shader\PostProcessingCMAA_EdgesCombinePS.fs" />
+    <None Include="shader\PostProcessingCMAA_ProcessAndApplyPS.fs" />
     <None Include="shader\smaaBlendWeight.frag" />
     <None Include="shader\smaaBlendWeight.vert" />
     <None Include="shader\smaaEdge.frag" />

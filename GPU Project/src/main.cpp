@@ -112,7 +112,15 @@ int main()
     // build and compile shaders
     // -------------------------
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
+
     Shader fxaaShader("shader/fxaa.vs", "shader/fxaa.fs");
+
+    Shader cmaaShader("shader/cmaa.vs", "shader/PostProcessingCMAA_DbgDisplayEdgesPS.fs");
+    Shader cmaa1Shader("shader/cmaa.vs", "shader/PostProcessingCMAA_Edges0PS.fs");
+    /*Shader cmaa2Shader("shader/cmaa.vs", "shader/PostProcessingCMAA_Edges1PS.fs");
+    Shader cmaa3Shader("shader/cmaa.vs", "shader/PostProcessingCMAA_EdgesCombinePS.fs");
+    Shader cmaa4Shader("shader/cmaa.vs", "shader/PostProcessingCMAA_ProcessAndApplyPS.fs");*/
+
     Shader basicScreenShader("shader/basicScreen.vs", "shader/basicScreen.fs");
 
     Shader screenShader = basicScreenShader;
@@ -155,6 +163,17 @@ int main()
     fxaaShader.setInt("uSourceTex", 0);
     fxaaShader.setVec2("RCPFrame", glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT));
 
+    cmaaShader.use();
+    cmaaShader.setInt("CMAAGlobals", 0);
+    cmaaShader.setInt("g_resultTexture", 1);
+    cmaaShader.setInt("g_resultTextureFlt4Slot1", 2);
+    cmaaShader.setInt("g_resultTextureSlot2", 3);
+    cmaaShader.setInt("g_screenTexture", 4);
+    cmaaShader.setInt("g_depthTexture", 5);
+    cmaaShader.setInt("g_src0Texture4Uint", 6);
+    cmaaShader.setInt("g_src0TextureFlt", 7);
+    cmaaShader.setInt("g_depthTextureFlt", 8);
+   
 
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
@@ -258,7 +277,7 @@ int main()
         //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         if (temp) {
-            screenShader = fxaaShader;
+            screenShader = cmaaShader;
         }
         else {
             screenShader = basicScreenShader;
@@ -333,7 +352,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !temp)
     {
         temp = true;
-        printf("KEY PRESSED!\n");
+        printf("FXAA ON\n");
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
     {

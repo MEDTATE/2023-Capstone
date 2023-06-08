@@ -86,16 +86,25 @@
     <None Include="shader\smaaBlendWeight.vert">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\FXAA.vert">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\FXAA_Default.frag">
-      <Filter>Shader</Filter>
-    </None>
     <None Include="shader\cmaa.vs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\cmaa.fs">
+    <None Include="shader\PostProcessingCMAA_Common.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\PostProcessingCMAA_EdgesCombinePS.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\PostProcessingCMAA_ProcessAndApplyPS.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\PostProcessingCMAA_DbgDisplayEdgesPS.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\PostProcessingCMAA_Edges0PS.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\PostProcessingCMAA_Edges1PS.fs">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
