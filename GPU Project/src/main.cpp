@@ -6,10 +6,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_glfw.h>
-#include <imgui/imgui_impl_opengl3.h>
-
 #include <learnopengl/shader.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
@@ -22,6 +18,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // settings
 const unsigned int SCR_WIDTH = 1200;
@@ -38,6 +35,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 bool temp = false;
+bool pressed_Z = false;
 
 int main()
 {
@@ -70,29 +68,14 @@ int main()
     //glfwSetMouseButtonCallback(window, mouse_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -105,9 +88,6 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-
-    // enable to test MSAA
-    glEnable(GL_MULTISAMPLE);
 
     // build and compile shaders
     // -------------------------
@@ -140,7 +120,6 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
@@ -154,7 +133,6 @@ int main()
     fxaaShader.use();
     fxaaShader.setInt("uSourceTex", 0);
     fxaaShader.setVec2("RCPFrame", glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT));
-
 
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
@@ -199,63 +177,14 @@ int main()
         // -----
         processInput(window);
 
-        // Start the Dear ImGui frame
-        //ImGui_ImplOpenGL3_NewFrame();
-        //ImGui_ImplGlfw_NewFrame();
-        //ImGui::NewFrame();
-
-        //// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        //if (show_demo_window)
-        //    ImGui::ShowDemoWindow(&show_demo_window);
-
-        //// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        //{
-        //    static float f = 0.0f;
-        //    static int counter = 0;
-
-        //    ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-        //    ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-        //    ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-        //    ImGui::Checkbox("Another Window", &show_another_window);
-
-        //    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        //    ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-        //    if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-        //        counter++;
-        //    ImGui::SameLine();
-        //    ImGui::Text("counter = %d", counter);
-
-        //    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        //    ImGui::End();
-        //}
-
-        //// 3. Show another simple window.
-        //if (show_another_window)
-        //{
-        //    ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        //    ImGui::Text("Hello from another window!");
-        //    if (ImGui::Button("Close Me"))
-        //        show_another_window = false;
-        //    ImGui::End();
-        //}
-
         // render
         // ------
         // bind to framebuffer and draw scene as we normally would to color texture 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
-        //ImGui::Render();
-        /*int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);*/
-        glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         if (temp) {
             screenShader = fxaaShader;
@@ -276,7 +205,7 @@ int main()
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
         modelShader.setMat4("model", model);
         container.Draw(modelShader);
 
@@ -301,10 +230,6 @@ int main()
     }
 
     // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
     glDeleteVertexArrays(1, &quadVAO);
     glDeleteBuffers(1, &quadVBO);
 
@@ -382,11 +307,37 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     std::cout << "Button Clicked!: " << button << std::endl;
-
-
-
 }
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
     std::cout << "Cursor moved! x: " << xpos << " y: " << ypos << std::endl;
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_P && action == GLFW_PRESS)
+    {
+        double x = camera.Position.x;
+        double y = camera.Position.y;
+        double z = camera.Position.z;
+
+        printf("Pos: (%f, %f, %f)\n", x, y, z);
+    }
+    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+    {
+        if (!pressed_Z)
+        {
+            pressed_Z = true;
+            camera.Zoom = 10.0f;
+        }
+        else if (pressed_Z)
+        {
+            pressed_Z = false;
+            camera.Zoom = 45.0f;
+        }
+    }
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+    {
+        camera.Position = glm::vec3(-4.11f, 7.36f, -7.36f);
+    }
 }

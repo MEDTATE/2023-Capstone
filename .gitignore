@@ -23,7 +23,8 @@ mono_crash.*
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
-[Rr]elease/
+[Rr]elease/GPU Project.exe
+[Rr]elease/GPU Project.pdb
 [Rr]eleases/
 x64/
 x86/

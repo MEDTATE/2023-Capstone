@@ -2,7 +2,11 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
+<<<<<<< HEAD
+      <FullPath>C:\Users\wooji\Desktop\2023-Capstone-LWJ\2023-Capstone-LWJ\x64\Debug\GPU Project.exe</FullPath>
+=======
       <FullPath>C:\Users\medtate\Desktop\2023 Capstone\2023-Capstone\x64\Debug\GPU Project.exe</FullPath>
+>>>>>>> 8dd0410172be56c6d196443d972d879582bea1b2
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
