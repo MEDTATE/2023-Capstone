@@ -1,0 +1,26 @@
+# Blender 3.3.5 Release Candidate MTL File: 'chainlink_fences_upload.blend'
+# www.blender.org
+
+newmtl chainlink
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+map_Kd textures/chainlink_fencing_chainlink_BaseColor.png
+map_Ns textures/chainlink_fencing_chainlink_Roughness.png
+map_d textures/chainlink_fencing_chainlink_BaseColor.png
+map_refl textures/chainlink_fencing_chainlink_Metallic.png
+map_Bump -bm 1.000000 textures/chainlink_fencing_chainlink_Normal.png
+
+newmtl fence_supports
+Ka 0.986364 0.986364 0.986364
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/chainlink_fencing_fence_supports_BaseColor.png
+map_Ns textures/chainlink_fencing_fence_supports_Roughness.png
+map_refl textures/chainlink_fencing_fence_supports_Metallic.png
+map_Bump -bm 1.000000 textures/chainlink_fencing_fence_supports_Normal.png
