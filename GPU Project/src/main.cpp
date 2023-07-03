@@ -34,7 +34,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-bool temp = false;
+bool fxaa = false;
 bool pressed_Z = false;
 
 int main()
@@ -93,9 +93,6 @@ int main()
     // -------------------------
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
     Shader fxaaShader("shader/fxaa.vs", "shader/fxaa.fs");
-    Shader basicScreenShader("shader/basicScreen.vs", "shader/basicScreen.fs");
-
-    Shader screenShader = basicScreenShader;
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
         // positions   // texCoords
@@ -126,9 +123,6 @@ int main()
 
     modelShader.use();
     modelShader.setInt("texture_diffuse1", 0);
-
-    basicScreenShader.use();
-    basicScreenShader.setInt("texture1", 0);
 
     fxaaShader.use();
     fxaaShader.setInt("uSourceTex", 0);
@@ -179,19 +173,16 @@ int main()
 
         // render
         // ------
-        // bind to framebuffer and draw scene as we normally would to color texture 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        if (fxaa) {
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        }
+        else {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
         glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        if (temp) {
-            screenShader = fxaaShader;
-        }
-        else {
-            screenShader = basicScreenShader;
-        }
 
         // don't forget to enable shader before setting uniforms
         modelShader.use();
@@ -205,22 +196,24 @@ int main()
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
         modelShader.setMat4("model", model);
         container.Draw(modelShader);
 
-        // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-        // clear all relevant buffers
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-        glClear(GL_COLOR_BUFFER_BIT);
+        if (fxaa) {
+            // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClear(GL_COLOR_BUFFER_BIT);
 
-        screenShader.use();
-        glBindVertexArray(quadVAO);
-        glDisable(GL_DEPTH_TEST);
-        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+            fxaaShader.use();
+            glBindVertexArray(quadVAO);
+            glDisable(GL_DEPTH_TEST);
+            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -255,14 +248,14 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
     
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !temp)
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
     {
-        temp = true;
+        fxaa = true;
         printf("KEY PRESSED!\n");
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
     {
-        temp = false;
+        fxaa = false;
     }
 }
 
@@ -320,8 +313,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         double x = camera.Position.x;
         double y = camera.Position.y;
         double z = camera.Position.z;
+        double yaw = camera.Yaw;
+        double pitch = camera.Pitch;
 
-        printf("Pos: (%f, %f, %f)\n", x, y, z);
+        printf("Pos: (%f, %f, %f), POV: (%f, %f)\n", x, y, z, yaw, pitch);
     }
     if (key == GLFW_KEY_Z && action == GLFW_PRESS)
     {
@@ -338,6 +333,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
-        camera.Position = glm::vec3(-4.11f, 7.36f, -7.36f);
+        camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
+        camera.Yaw = 111.90;
+        camera.Pitch = -6.60;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
+        camera.Yaw = -40.60;
+        camera.Pitch = 33.30;
+        camera.ProcessMouseMovement(0, 0);
     }
 }
