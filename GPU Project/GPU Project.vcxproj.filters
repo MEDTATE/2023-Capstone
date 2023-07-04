@@ -62,9 +62,6 @@
     <None Include="shader\basicModel.fs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\fxaa.fs">
-      <Filter>Shader</Filter>
-    </None>
     <None Include="shader\fxaa.vs">
       <Filter>Shader</Filter>
     </None>
@@ -98,6 +95,18 @@
     <None Include="shader\cmaa.fs">
       <Filter>Shader</Filter>
     </None>
+    <None Include="shader\basicScreen.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\basicScreen.fs">
+      <Filter>Shader</Filter>
+    </None>
+<<<<<<< HEAD
+    <None Include="shader\fxaa.fs">
+      <Filter>Shader</Filter>
+    </None>
+=======
+>>>>>>> 8dd0410172be56c6d196443d972d879582bea1b2
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\imgui\imconfig.h">
