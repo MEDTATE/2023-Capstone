@@ -40,6 +40,7 @@ float lastFrame = 0.0f;
 
 bool fxaa = false;
 bool pressed_Z = false;
+static bool checked = false;
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -219,8 +220,18 @@ int main()
 
         // input
         // -----
-        //processInput(window);
+        processInput(window);
 
+        // render your GUI
+        {
+            ImGui::Begin("Hello, world!", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Checkbox("FXAA", &checked);
+
+            fxaa = checked;
+
+            ImGui::End();
+        }
 
         // render
         // ------
@@ -264,17 +275,6 @@ int main()
             glDisable(GL_DEPTH_TEST);
             glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
             glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
-
-
-        // render your GUI
-        {
-            ImGui::Begin("Hello, world!", 0, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
-
-
-
-
-            ImGui::End();
         }
 
 
