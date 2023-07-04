@@ -71,7 +71,7 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     // Our state
     bool show_demo_window = true;
@@ -247,7 +247,6 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
-    
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
     {
         fxaa = true;
@@ -274,6 +273,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        return;
+    }
+
     if (firstMouse)
     {
         lastX = xpos;
@@ -281,11 +287,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         firstMouse = false;
     }
 
+    
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
+    
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -323,7 +331,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if (!pressed_Z)
         {
             pressed_Z = true;
-            camera.Zoom = 10.0f;
+            
         }
         else if (pressed_Z)
         {
