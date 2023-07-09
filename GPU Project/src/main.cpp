@@ -23,6 +23,7 @@ void processInput(GLFWwindow* window);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void changeViewpoint(int view);
 
 // settings
 const unsigned int SCR_WIDTH = 1200;
@@ -38,9 +39,12 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-bool fxaa = false;
+static bool antiAliasing = false;
+static bool fxaa = false;
+static bool smaa = false;
+static bool taa = false;
+static bool cmaa = false;
 bool pressed_Z = false;
-static bool checked = false;
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -224,11 +228,39 @@ int main()
 
         // render your GUI
         {
-            ImGui::Begin("Hello, world!", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+            // Set window size before create it
+            ImGui::SetNextWindowSize(ImVec2(150, 220), 0);
+            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Checkbox("FXAA", &checked);
+            ImGui::SeparatorText("Anti Aliasing");
+            if (ImGui::BeginTable("split", 2))  {
+                ImGui::TableNextColumn(); ImGui::Checkbox("AA On", &antiAliasing);
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Checkbox("FXAA", &fxaa);
+                ImGui::TableNextColumn(); ImGui::Checkbox("SMAA", &smaa);
+                ImGui::TableNextColumn(); ImGui::Checkbox("TAA", &taa);
+                ImGui::TableNextColumn(); ImGui::Checkbox("CMAA", &cmaa);
+                ImGui::EndTable();
+            }
 
-            fxaa = checked;
+            // Bind to 'AA on' button
+            if (antiAliasing == false) {
+                fxaa = false;
+                smaa = false;
+                taa = false;
+                cmaa = false;
+            }
+
+            ImGui::SeparatorText("Viewpoint");
+            if (ImGui::Button("1"))
+                changeViewpoint(1);
+            ImGui::SameLine();
+            if (ImGui::Button("2"))
+                changeViewpoint(2);
+
+            ImGui::NewLine();
+            if (ImGui::Button("Exit"))
+                return 0;
 
             ImGui::End();
         }
@@ -319,6 +351,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
+    /*
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
     {
         fxaa = true;
@@ -328,6 +361,7 @@ void processInput(GLFWwindow* window)
     {
         fxaa = false;
     }
+    */
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -411,6 +445,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             camera.Zoom = 45.0f;
         }
     }
+    /*
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
         camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
@@ -419,6 +454,25 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         camera.ProcessMouseMovement(0, 0);
     }
     if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
+        camera.Yaw = -40.60;
+        camera.Pitch = 33.30;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    */
+}
+
+void changeViewpoint(int view)
+{
+    if (view == 1) 
+    {
+        camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
+        camera.Yaw = 111.90;
+        camera.Pitch = -6.60;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    if (view == 2)
     {
         camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
         camera.Yaw = -40.60;
