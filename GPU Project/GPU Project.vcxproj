@@ -169,7 +169,9 @@
     <None Include="shader\fxaa.vs" />
     <None Include="shader\FXAA_Default.frag" />
     <None Include="shader\smaaBlendWeight.frag" />
+    <None Include="shader\smaaBlendWeight.fs" />
     <None Include="shader\smaaBlendWeight.vert" />
+    <None Include="shader\smaaBlendWeight.vs" />
     <None Include="shader\smaaEdge.frag" />
     <None Include="shader\smaaEdge.vert" />
     <None Include="shader\smaaNeighbor.frag" />

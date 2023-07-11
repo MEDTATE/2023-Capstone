@@ -143,6 +143,9 @@ int main()
     // -------------------------
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
     Shader fxaaShader("shader/fxaa.vs", "shader/fxaa.fs");
+    Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
+    Shader smaaBlendWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
+    // Shader smaaNeighbor("shader/smaaEdge.vs", "shader/smaaEdge.fs");
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
         // positions   // texCoords
@@ -267,7 +270,7 @@ int main()
 
         // render
         // ------
-        if (fxaa) {
+        if (fxaa || smaa) {
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         }
         else {
@@ -307,6 +310,19 @@ int main()
             glDisable(GL_DEPTH_TEST);
             glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
             glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
+        if (smaa) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            smaaEdgeShader.use();
+            smaaBlendWeightShader.use();
+            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
         }
 
 
