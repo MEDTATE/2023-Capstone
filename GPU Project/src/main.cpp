@@ -1,3 +1,7 @@
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
@@ -19,6 +23,7 @@ void processInput(GLFWwindow* window);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void changeViewpoint(int view);
 
 // settings
 const unsigned int SCR_WIDTH = 1200;
@@ -34,15 +39,26 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-bool fxaa = false;
+static bool antiAliasing = false;
+static bool fxaa = false;
+static bool smaa = false;
+static bool taa = false;
+static bool cmaa = false;
 bool pressed_Z = false;
+
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
 
 int main()
 {
     // glfw: initialize and configure
     // ------------------------------
-    glfwInit();
-    const char* glsl_version = "#version 330";
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
+        return 1;
+    const char* glsl_version = "#version 400";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -56,7 +72,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Anti Aliasing Project", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -71,11 +87,45 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigWindowsResizeFromEdges = false;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // Load Fonts
+    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
+    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
+    // - Read 'docs/FONTS.md' for more instructions and details.
+    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+    // - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
+    //io.Fonts->AddFontDefault();
+    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+    //IM_ASSERT(font != NULL);
 
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.5f, 0.5f, 0.5f, 1.00f);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -167,9 +217,53 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
         // input
         // -----
         processInput(window);
+
+        // render your GUI
+        {
+            // Set window size before create it
+            ImGui::SetNextWindowSize(ImVec2(150, 220), 0);
+            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+
+            ImGui::SeparatorText("Anti Aliasing");
+            if (ImGui::BeginTable("split", 2))  {
+                ImGui::TableNextColumn(); ImGui::Checkbox("AA On", &antiAliasing);
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Checkbox("FXAA", &fxaa);
+                ImGui::TableNextColumn(); ImGui::Checkbox("SMAA", &smaa);
+                ImGui::TableNextColumn(); ImGui::Checkbox("TAA", &taa);
+                ImGui::TableNextColumn(); ImGui::Checkbox("CMAA", &cmaa);
+                ImGui::EndTable();
+            }
+
+            // Bind to 'AA on' button
+            if (antiAliasing == false) {
+                fxaa = false;
+                smaa = false;
+                taa = false;
+                cmaa = false;
+            }
+
+            ImGui::SeparatorText("Viewpoint");
+            if (ImGui::Button("1"))
+                changeViewpoint(1);
+            ImGui::SameLine();
+            if (ImGui::Button("2"))
+                changeViewpoint(2);
+
+            ImGui::NewLine();
+            if (ImGui::Button("Exit"))
+                return 0;
+
+            ImGui::End();
+        }
 
         // render
         // ------
@@ -181,7 +275,7 @@ int main()
         }
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClearColor(clear_color.x* clear_color.w, clear_color.y* clear_color.w, clear_color.z* clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
@@ -216,8 +310,15 @@ int main()
         }
 
 
+        // Render dear imgui into screen
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -225,6 +326,9 @@ int main()
     // Cleanup
     glDeleteVertexArrays(1, &quadVAO);
     glDeleteBuffers(1, &quadVBO);
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -247,7 +351,7 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
-    
+    /*
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
     {
         fxaa = true;
@@ -257,6 +361,7 @@ void processInput(GLFWwindow* window)
     {
         fxaa = false;
     }
+    */
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -274,6 +379,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        return;
+    }
+
     if (firstMouse)
     {
         lastX = xpos;
@@ -281,11 +393,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         firstMouse = false;
     }
 
+    
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
+    
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -323,7 +437,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if (!pressed_Z)
         {
             pressed_Z = true;
-            camera.Zoom = 10.0f;
+            
         }
         else if (pressed_Z)
         {
@@ -331,6 +445,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             camera.Zoom = 45.0f;
         }
     }
+    /*
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
         camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
@@ -339,6 +454,25 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         camera.ProcessMouseMovement(0, 0);
     }
     if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
+        camera.Yaw = -40.60;
+        camera.Pitch = 33.30;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    */
+}
+
+void changeViewpoint(int view)
+{
+    if (view == 1) 
+    {
+        camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
+        camera.Yaw = 111.90;
+        camera.Pitch = -6.60;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    if (view == 2)
     {
         camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
         camera.Yaw = -40.60;
