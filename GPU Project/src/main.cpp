@@ -58,9 +58,9 @@ int main()
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
-    const char* glsl_version = "#version 400";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    const char* glsl_version = "#version 450";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // num of samples for MSAA 
@@ -142,7 +142,9 @@ int main()
     // build and compile shaders
     // -------------------------
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
-    Shader fxaaShader("shader/fxaa.vs", "shader/fxaa.fs");
+    Shader fxaaShader("shader/fxaa_demo.vs", "shader/fxaa_demo.fs");
+
+    //Shader smaa3Shader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
         // positions   // texCoords
@@ -175,8 +177,8 @@ int main()
     modelShader.setInt("texture_diffuse1", 0);
 
     fxaaShader.use();
-    fxaaShader.setInt("uSourceTex", 0);
-    fxaaShader.setVec2("RCPFrame", glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT));
+    fxaaShader.setInt("colorTex", 0);
+    fxaaShader.setVec2("screenSize", glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT));
 
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);

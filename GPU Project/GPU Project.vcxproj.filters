@@ -1,149 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="리소스 파일">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{062f7ba4-2dd1-481f-854d-9c59e47ecf44}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header">
-      <UniqueIdentifier>{39a2b9da-f908-42ec-b1f5-2c03042f6d00}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="IMGUI">
-      <UniqueIdentifier>{241fa868-0ed1-433f-9d3c-344a7156d440}</UniqueIdentifier>
-    </Filter>
+    <ClCompile Include="include\imgui\imgui.cpp" />
+    <ClCompile Include="include\imgui\imgui_demo.cpp" />
+    <ClCompile Include="include\imgui\imgui_draw.cpp" />
+    <ClCompile Include="include\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="include\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="include\imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="include\imgui\imgui_tables.cpp" />
+    <ClCompile Include="include\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="src\glad.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_demo.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_draw.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_impl_glfw.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_impl_opengl3.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_stdlib.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_tables.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
-    <ClCompile Include="include\imgui\imgui_widgets.cpp">
-      <Filter>IMGUI</Filter>
-    </ClCompile>
+    <ClInclude Include="include\fxaa3_11.h" />
+    <ClInclude Include="include\imgui\imconfig.h" />
+    <ClInclude Include="include\imgui\imgui.h" />
+    <ClInclude Include="include\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="include\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="include\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="include\imgui\imgui_internal.h" />
+    <ClInclude Include="include\imgui\imgui_stdlib.h" />
+    <ClInclude Include="include\imgui\imstb_rectpack.h" />
+    <ClInclude Include="include\imgui\imstb_textedit.h" />
+    <ClInclude Include="include\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\shaderDefines.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\basicModel.vs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\basicModel.fs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\fxaa.vs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\smaaEdge.frag">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\smaaEdge.vert">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\smaaNeighbor.frag">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\smaaNeighbor.vert">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\smaaBlendWeight.frag">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\smaaBlendWeight.vert">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\FXAA.vert">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\FXAA_Default.frag">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\cmaa.vs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\cmaa.fs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\basicScreen.vs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\basicScreen.fs">
-      <Filter>Shader</Filter>
-    </None>
-<<<<<<< HEAD
-    <None Include="shader\fxaa.fs">
-      <Filter>Shader</Filter>
-    </None>
-=======
->>>>>>> 8dd0410172be56c6d196443d972d879582bea1b2
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\imgui\imconfig.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imgui.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imgui_impl_glfw.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imgui_impl_opengl3.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imgui_impl_opengl3_loader.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imgui_internal.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imgui_stdlib.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imstb_rectpack.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imstb_textedit.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\imgui\imstb_truetype.h">
-      <Filter>IMGUI</Filter>
-    </ClInclude>
-    <ClInclude Include="include\shaderDefines.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="include\fxaa3_11.h">
-      <Filter>Header</Filter>
-    </ClInclude>
+    <None Include="shader\basicModel.fs" />
+    <None Include="shader\basicModel.vs" />
+    <None Include="shader\basicScreen.fs" />
+    <None Include="shader\basicScreen.vs" />
+    <None Include="shader\cmaa.fs" />
+    <None Include="shader\cmaa.vs" />
+    <None Include="shader\fxaa.fs" />
+    <None Include="shader\fxaa.vs" />
+    <None Include="shader\fxaa_demo.vs" />
+    <None Include="shader\fxaa_demo.fs" />
+    <None Include="shader\smaaBlendWeight.vert" />
+    <None Include="shader\smaaEdge.frag" />
+    <None Include="shader\smaaEdge.vert" />
+    <None Include="shader\smaaNeighbor.fs" />
+    <None Include="shader\smaaNeighbor.vs" />
+    <None Include="shader\smaaBlendWeight.frag" />
   </ItemGroup>
 </Project>
