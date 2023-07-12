@@ -164,8 +164,6 @@
     <None Include="shader\basicScreen.vs" />
     <None Include="shader\cmaa.fs" />
     <None Include="shader\cmaa.vs" />
-    <None Include="shader\fxaa.fs" />
-    <None Include="shader\fxaa.vs" />
     <None Include="shader\fxaa_demo.fs" />
     <None Include="shader\fxaa_demo.vs" />
     <None Include="shader\smaaBlendWeight.frag" />

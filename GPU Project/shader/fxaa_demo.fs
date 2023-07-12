@@ -993,7 +993,7 @@ FxaaFloat4 FxaaPixelShader(
 #endif
 
 uniform sampler2D colorTex;
-uniform vec2 screenSize;
+uniform vec4 screenSize;
 
 in vec2 texcoord;
 
@@ -1002,5 +1002,5 @@ out vec4 outColor;
 void main(void)
 {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
-    outColor = FxaaPixelShader(texcoord, zero, colorTex, colorTex, colorTex, screenSize, zero, zero, zero, 0.75, 0.166, 0.0833, 8.0, 0.125, 0.05, zero);
+    outColor = FxaaPixelShader(texcoord, zero, colorTex, colorTex, colorTex, screenSize.xy, zero, zero, zero, 0.75, 0.166, 0.0833, 8.0, 0.125, 0.05, zero);
 }

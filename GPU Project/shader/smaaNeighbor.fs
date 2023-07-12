@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 #version 450 core
 
-#include "shaderDefines.h"
+uniform vec4 screenSize;
 
 #define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1
@@ -33,6 +33,8 @@ THE SOFTWARE.
 
 #define LinearSampler linearSampler
 #define PointSampler  nearestSampler
+
+
 
 
 /**
@@ -1476,13 +1478,13 @@ void SMAASeparatePS(float4 position,
 
 
 
-layout (location = 0) out vec4 outColor;
+out vec4 outColor;
 
 uniform SMAATexture2D(colorTex);
 uniform SMAATexture2D(blendTex);
 
-layout (location = 0) in vec2 texcoord;
-layout (location = 1) in vec4 offset;
+in vec2 texcoord;
+in vec4 offset;
 
 void main(void)
 {
