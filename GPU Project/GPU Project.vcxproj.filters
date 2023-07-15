@@ -35,11 +35,11 @@
     <None Include="shader\cmaa.vs" />
     <None Include="shader\fxaa_demo.vs" />
     <None Include="shader\fxaa_demo.fs" />
-    <None Include="shader\smaaBlendWeight.vert" />
-    <None Include="shader\smaaEdge.frag" />
-    <None Include="shader\smaaEdge.vert" />
+    <None Include="shader\smaaBlendWeight.vs" />
+    <None Include="shader\smaaEdge.fs" />
+    <None Include="shader\smaaEdge.vs" />
     <None Include="shader\smaaNeighbor.fs" />
     <None Include="shader\smaaNeighbor.vs" />
-    <None Include="shader\smaaBlendWeight.frag" />
+    <None Include="shader\smaaBlendWeight.fs" />
   </ItemGroup>
 </Project>

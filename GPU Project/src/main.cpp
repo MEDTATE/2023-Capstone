@@ -144,7 +144,10 @@ int main()
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
     Shader fxaaShader("shader/fxaa_demo.vs", "shader/fxaa_demo.fs");
 
+    Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
+    Shader smaaweightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaablendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
+    
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
         // positions   // texCoords
@@ -180,10 +183,10 @@ int main()
     fxaaShader.setInt("colorTex", 0);
     fxaaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-    smaablendShader.use();
+    /*smaablendShader.use();
     smaablendShader.setInt("colorTex", 0);
     smaablendShader.setInt("blendTex", 0);
-    smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));*/
 
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
