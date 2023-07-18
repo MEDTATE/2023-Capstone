@@ -164,16 +164,14 @@
     <None Include="shader\basicScreen.vs" />
     <None Include="shader\cmaa.fs" />
     <None Include="shader\cmaa.vs" />
-    <None Include="shader\fxaa.fs" />
-    <None Include="shader\FXAA.vert" />
-    <None Include="shader\fxaa.vs" />
-    <None Include="shader\FXAA_Default.frag" />
-    <None Include="shader\smaaBlendWeight.frag" />
-    <None Include="shader\smaaBlendWeight.vert" />
-    <None Include="shader\smaaEdge.frag" />
-    <None Include="shader\smaaEdge.vert" />
-    <None Include="shader\smaaNeighbor.frag" />
-    <None Include="shader\smaaNeighbor.vert" />
+    <None Include="shader\fxaa_demo.fs" />
+    <None Include="shader\fxaa_demo.vs" />
+    <None Include="shader\smaaBlendWeight.fs" />
+    <None Include="shader\smaaBlendWeight.vs" />
+    <None Include="shader\smaaEdge.fs" />
+    <None Include="shader\smaaEdge.vs" />
+    <None Include="shader\smaaNeighbor.fs" />
+    <None Include="shader\smaaNeighbor.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\fxaa3_11.h" />
