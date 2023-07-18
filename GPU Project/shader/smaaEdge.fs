@@ -30,7 +30,6 @@ uniform vec4 subsampleIndices;
 uniform float predicationThreshold;
 uniform float predicationScale;
 uniform float predicationStrength;
-uniform float reprojWeigthScale;
 
 #define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1

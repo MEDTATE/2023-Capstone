@@ -23,84 +23,23 @@ THE SOFTWARE.
 
 #version 450 core
 
-// shaderDefines.h copy-----------------------------------------------
-#define ATTR_POS   0
-#define ATTR_UV    1
-#define ATTR_COLOR 2
+uniform vec4 screenSize;
 
+uniform vec4 subsampleIndices;
 
-struct SMAAParameters {
-	float threshold;
-	float depthThreshold;
-	uint  maxSearchSteps;
-	uint  maxSearchStepsDiag;
+uniform float predicationThreshold;
+uniform float predicationScale;
+uniform float predicationStrength;
 
-	uint  cornerRounding;
-	uint  pad0;
-	uint  pad1;
-	uint  pad2;
-};
-
-
-
-#ifdef __cplusplus
-
-struct SMAAUBO
-
-#else  // __cplusplus
-
-layout(set = 1, binding = 0, std140) uniform SMAAUBO
-
-#endif  // __cplusplus
-{
-	SMAAParameters  smaaParameters;
-
-	vec4 subsampleIndices;
-
-	float predicationThreshold;
-	float predicationScale;
-	float predicationStrength;
-	float reprojWeigthScale;
-};
-
-
-#ifdef SMAA_PRESET_CUSTOM
-
-#define SMAA_THRESHOLD                 smaaParameters.threshold
-#define SMAA_DEPTH_THRESHOLD           smaaParameters.depthThreshold
-#define SMAA_MAX_SEARCH_STEPS          smaaParameters.maxSearchSteps
-#define SMAA_MAX_SEARCH_STEPS_DIAG     smaaParameters.maxSearchStepsDiag
-#define SMAA_CORNER_ROUNDING           smaaParameters.cornerRounding
-
-#endif  // SMAA_PRESET_CUSTOM
-
-
-struct Shape {
-	vec4   rotation;
-	vec3   position;
-	uint   order;
-	vec3   color;
-	float  pad1;
-};
-
-// shaderDefines.h copy end ------------------------------------------------
-
-#define SMAA_RT_METRICS float4(1.0 / 1200.0, 1.0 / 900.0, 1200.0, 900.0)
+#define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1
 
 #define SMAA_INCLUDE_PS 1
 #define SMAA_INCLUDE_VS 0
 
-#ifdef VULKAN_FLIP
-#define SMAA_FLIP_Y 0
-#endif
-
-
 #define LinearSampler linearSampler
 #define PointSampler  nearestSampler
 
-
-// smaa.h copy ---------------------------------------------------------
 /**
  * Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
  * Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
@@ -1540,20 +1479,19 @@ void SMAASeparatePS(float4 position,
 //-----------------------------------------------------------------------------
 #endif // SMAA_INCLUDE_PS
 
-// smaa.h copy end ------------------------------------------------------------------------
 
 
 out vec4 outColor;
 
-layout(binding = 1) uniform sampler2D edgesTex;
-layout(binding = 2) uniform sampler2D areaTex;
-layout(binding = 3) uniform sampler2D searchTex;
+uniform SMAATexture2D(edgesTex);
+uniform SMAATexture2D(areaTex);
+uniform SMAATexture2D(searchTex);
 
-layout (location = 0) in vec2 texcoord;
-layout (location = 1) in vec2 pixcoord;
-layout (location = 2) in vec4 offset0;
-layout (location = 3) in vec4 offset1;
-layout (location = 4) in vec4 offset2;
+in vec2 texcoord;
+in vec2 pixcoord;
+in vec4 offset0;
+in vec4 offset1;
+in vec4 offset2;
 
 void main(void)
 {

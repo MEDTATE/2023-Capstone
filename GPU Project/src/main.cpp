@@ -183,10 +183,37 @@ int main()
     fxaaShader.setInt("colorTex", 0);
     fxaaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-    /*smaablendShader.use();
+    smaaEdgeShader.use();
+    smaaEdgeShader.setInt("depthTex", 0);
+    smaaEdgeShader.setInt("colorTex", 0);
+    smaaEdgeShader.setInt("predicationTex", 0);
+
+    smaaEdgeShader.setFloat("predicationThreshold", 0.0);
+    smaaEdgeShader.setFloat("predicationScale", 0.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.0);
+
+    smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+
+  /*  smaaweightShader.use();
+    smaaweightShader.setInt("edgesTex", 0);
+    smaaweightShader.setInt("areaTex", 0);
+    smaaweightShader.setInt("searchTex", 0);
+
+    smaaweightShader.setFloat("predicationThreshold", 0.0);
+    smaaweightShader.setFloat("predicationScale", 0.0);
+    smaaweightShader.setFloat("predicationStrength", 0.0);
+
+    smaaweightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+
+    smaablendShader.use();
     smaablendShader.setInt("colorTex", 0);
     smaablendShader.setInt("blendTex", 0);
-    smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));*/
+
+    smaablendShader.setFloat("predicationThreshold", 0.0);
+    smaablendShader.setFloat("predicationScale", 0.0);
+    smaablendShader.setFloat("predicationStrength", 0.0);*/
+
+    smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     unsigned int framebuffer;
     glGenFramebuffers(1, &framebuffer);
@@ -280,6 +307,9 @@ int main()
         if (fxaa) {
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         }
+        if (smaa) {
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        }
         else {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
@@ -317,6 +347,32 @@ int main()
             glDisable(GL_DEPTH_TEST);
             glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
             glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        if (smaa) {
+            // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            smaaEdgeShader.use();
+            glBindVertexArray(quadVAO);
+            glDisable(GL_DEPTH_TEST);
+            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            //smaaweightShader.use();
+            //glBindVertexArray(quadVAO);
+            //glDisable(GL_DEPTH_TEST);
+            //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            //glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            //smaablendShader.use();
+            //glBindVertexArray(quadVAO);
+            //glDisable(GL_DEPTH_TEST);
+            //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            //glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
