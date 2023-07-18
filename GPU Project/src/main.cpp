@@ -30,7 +30,7 @@ const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 900;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.0f, -0.5f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -39,12 +39,15 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-static bool antiAliasing = false;
-static bool fxaa = false;
-static bool smaa = false;
-static bool taa = false;
-static bool cmaa = false;
-bool pressed_Z = false;
+// AA variables
+static bool antiAliasing;
+static bool fxaa;
+static bool smaa;
+static bool taa;
+static bool cmaa;
+// fxaa = 1, smaa = 2, taa = 3, cmaa = 4
+// default = fxaa
+static int currentAA = 1;
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -175,6 +178,9 @@ int main()
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
+    Model sponza("resources/objects/sponza/sponza.obj");
+
+    Model currentModel = container;
 
     modelShader.use();
     modelShader.setInt("texture_diffuse1", 0);
@@ -263,37 +269,92 @@ int main()
         // -----
         processInput(window);
 
-        // render your GUI
+        // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 220), 0);
+            ImGui::SetNextWindowSize(ImVec2(150, 270), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Anti Aliasing");
+            if (ImGui::Checkbox("AA On", &antiAliasing)) {
+                switch(currentAA) {
+                    // remember which option was activated last time
+                case 1:
+                    fxaa = true;
+                    break;
+                case 2:
+                    smaa = true;
+                    break;
+                case 3:
+                    taa = true;
+                    break;
+                case 4:
+                    cmaa = true;
+                    break;
+                }
+            }
+            
             if (ImGui::BeginTable("split", 2))  {
-                ImGui::TableNextColumn(); ImGui::Checkbox("AA On", &antiAliasing);
+                ImGui::TableNextColumn(); 
                 ImGui::TableNextRow();
-                ImGui::TableNextColumn(); ImGui::Checkbox("FXAA", &fxaa);
-                ImGui::TableNextColumn(); ImGui::Checkbox("SMAA", &smaa);
-                ImGui::TableNextColumn(); ImGui::Checkbox("TAA", &taa);
-                ImGui::TableNextColumn(); ImGui::Checkbox("CMAA", &cmaa);
+                ImGui::TableNextColumn(); 
+                if (ImGui::Checkbox("FXAA", &fxaa)) {
+                    smaa = taa = cmaa = false;
+                    currentAA = 1;
+                }
+                ImGui::TableNextColumn(); 
+                if (ImGui::Checkbox("SMAA", &smaa)) {
+                    fxaa = taa = cmaa = false;
+                    currentAA = 2;
+                }
+                ImGui::TableNextColumn(); 
+                if (ImGui::Checkbox("TAA", &taa)) {
+                    fxaa = smaa = cmaa = false;
+                    currentAA = 3;
+                }
+                ImGui::TableNextColumn(); 
+                if (ImGui::Checkbox("CMAA", &cmaa)) {
+                    fxaa = smaa = taa = false;
+                    currentAA = 4;
+                }
+
+                // Bind to 'AA on' button
+                if (antiAliasing == false) {
+                    fxaa = false;
+                    smaa = false;
+                    taa = false;
+                    cmaa = false;
+                }
+
                 ImGui::EndTable();
             }
 
-            // Bind to 'AA on' button
-            if (antiAliasing == false) {
-                fxaa = false;
-                smaa = false;
-                taa = false;
-                cmaa = false;
-            }
-
+            // Change Viewpoint
             ImGui::SeparatorText("Viewpoint");
             if (ImGui::Button("1"))
                 changeViewpoint(1);
             ImGui::SameLine();
             if (ImGui::Button("2"))
                 changeViewpoint(2);
+            ImGui::SameLine();
+            if (ImGui::Button("3"))
+                changeViewpoint(3);
+
+            // Change Scene
+            const char* items[] = { "Container", "Sponza" };
+            static int item_current = 0;
+            ImGui::SeparatorText("Scene");
+            ImGui::Combo("Scene", &item_current, items, IM_ARRAYSIZE(items));
+
+            switch (item_current) {
+            case 0:
+                currentModel = container;
+                break;
+            case 1:
+                currentModel = sponza;
+                break;
+            }
+
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -301,18 +362,12 @@ int main()
 
             ImGui::End();
         }
-
-        // render
-        // ------
-        if (fxaa) {
+        
+        if (antiAliasing)
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        }
-        if (smaa) {
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        }
-        else {
+        else
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
+        
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
         glClearColor(clear_color.x* clear_color.w, clear_color.y* clear_color.w, clear_color.z* clear_color.w, clear_color.w);
@@ -322,7 +377,7 @@ int main()
         modelShader.use();
 
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         glm::mat4 view = camera.GetViewMatrix();
         modelShader.setMat4("projection", projection);
         modelShader.setMat4("view", view);
@@ -332,7 +387,7 @@ int main()
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
         modelShader.setMat4("model", model);
-        container.Draw(modelShader);
+        currentModel.Draw(modelShader);
 
         if (fxaa) {
             // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
@@ -498,19 +553,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
         printf("Pos: (%f, %f, %f), POV: (%f, %f)\n", x, y, z, yaw, pitch);
     }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        if (!pressed_Z)
-        {
-            pressed_Z = true;
-            
-        }
-        else if (pressed_Z)
-        {
-            pressed_Z = false;
-            camera.Zoom = 45.0f;
-        }
-    }
+
     /*
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
@@ -531,14 +574,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void changeViewpoint(int view)
 {
-    if (view == 1) 
+    if (view == 1)
+    {
+        camera.Position = glm::vec3(-35.0f, 10.0f, 0.0f);
+        camera.Yaw = -360.0f;
+        camera.Pitch = -0.5f;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    if (view == 2) 
     {
         camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
         camera.Yaw = 111.90;
         camera.Pitch = -6.60;
         camera.ProcessMouseMovement(0, 0);
     }
-    if (view == 2)
+    if (view == 3)
     {
         camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
         camera.Yaw = -40.60;
