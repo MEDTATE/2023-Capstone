@@ -150,7 +150,7 @@ int main()
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
     Shader smaaweightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaablendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
-
+    
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
         // positions   // texCoords
@@ -194,23 +194,20 @@ int main()
     smaaEdgeShader.setInt("colorTex", 0);
     smaaEdgeShader.setInt("predicationTex", 0);
 
-    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
-    smaaEdgeShader.setFloat("predicationScale", 2.0);
-    smaaEdgeShader.setFloat("predicationStrength", 0.4);
+    smaaEdgeShader.setFloat("predicationThreshold", 0.0);
+    smaaEdgeShader.setFloat("predicationScale", 0.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.0);
 
     smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-    smaaweightShader.use();
+  /*  smaaweightShader.use();
     smaaweightShader.setInt("edgesTex", 0);
     smaaweightShader.setInt("areaTex", 0);
     smaaweightShader.setInt("searchTex", 0);
 
-    smaaweightShader.setVec4("subsampleIndices", glm::vec4(1.0f, 1.0f, 1.0f, 0.0f));
-
-
-    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
-    smaaEdgeShader.setFloat("predicationScale", 2.0);
-    smaaEdgeShader.setFloat("predicationStrength", 0.4);
+    smaaweightShader.setFloat("predicationThreshold", 0.0);
+    smaaweightShader.setFloat("predicationScale", 0.0);
+    smaaweightShader.setFloat("predicationStrength", 0.0);
 
     smaaweightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
@@ -218,9 +215,9 @@ int main()
     smaablendShader.setInt("colorTex", 0);
     smaablendShader.setInt("blendTex", 0);
 
-    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
-    smaaEdgeShader.setFloat("predicationScale", 2.0);
-    smaaEdgeShader.setFloat("predicationStrength", 0.4);
+    smaablendShader.setFloat("predicationThreshold", 0.0);
+    smaablendShader.setFloat("predicationScale", 0.0);
+    smaablendShader.setFloat("predicationStrength", 0.0);*/
 
     smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
@@ -238,14 +235,14 @@ int main()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-
+   
     // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-
+    
     // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
@@ -280,7 +277,7 @@ int main()
 
             ImGui::SeparatorText("Anti Aliasing");
             if (ImGui::Checkbox("AA On", &antiAliasing)) {
-                switch (currentAA) {
+                switch(currentAA) {
                     // remember which option was activated last time
                 case 1:
                     fxaa = true;
@@ -296,26 +293,26 @@ int main()
                     break;
                 }
             }
-
-            if (ImGui::BeginTable("split", 2)) {
-                ImGui::TableNextColumn();
+            
+            if (ImGui::BeginTable("split", 2))  {
+                ImGui::TableNextColumn(); 
                 ImGui::TableNextRow();
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); 
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
                     smaa = taa = cmaa = false;
                     currentAA = 1;
                 }
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); 
                 if (ImGui::Checkbox("SMAA", &smaa)) {
                     fxaa = taa = cmaa = false;
                     currentAA = 2;
                 }
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); 
                 if (ImGui::Checkbox("TAA", &taa)) {
                     fxaa = smaa = cmaa = false;
                     currentAA = 3;
                 }
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); 
                 if (ImGui::Checkbox("CMAA", &cmaa)) {
                     fxaa = smaa = taa = false;
                     currentAA = 4;
@@ -365,15 +362,15 @@ int main()
 
             ImGui::End();
         }
-
+        
         if (antiAliasing)
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         else
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+        
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClearColor(clear_color.x* clear_color.w, clear_color.y* clear_color.w, clear_color.z* clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
@@ -420,17 +417,17 @@ int main()
             glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            smaaweightShader.use();
-            glBindVertexArray(quadVAO);
-            glDisable(GL_DEPTH_TEST);
-            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            //smaaweightShader.use();
+            //glBindVertexArray(quadVAO);
+            //glDisable(GL_DEPTH_TEST);
+            //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            //glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            smaablendShader.use();
-            glBindVertexArray(quadVAO);
-            glDisable(GL_DEPTH_TEST);
-            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            //smaablendShader.use();
+            //glBindVertexArray(quadVAO);
+            //glDisable(GL_DEPTH_TEST);
+            //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            //glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
@@ -517,13 +514,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         firstMouse = false;
     }
 
-
+    
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
-
+    
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -584,7 +581,7 @@ void changeViewpoint(int view)
         camera.Pitch = -0.5f;
         camera.ProcessMouseMovement(0, 0);
     }
-    if (view == 2)
+    if (view == 2) 
     {
         camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
         camera.Yaw = 111.90;
