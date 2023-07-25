@@ -174,7 +174,8 @@
     <None Include="shader\smaaNeighbor.vs" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\fxaa3_11.h" />
+    <ClInclude Include="include\AreaTex.h" />
+    <ClInclude Include="include\glew\include\GL\glew.h" />
     <ClInclude Include="include\imgui\imconfig.h" />
     <ClInclude Include="include\imgui\imgui.h" />
     <ClInclude Include="include\imgui\imgui_impl_glfw.h" />
@@ -185,7 +186,9 @@
     <ClInclude Include="include\imgui\imstb_rectpack.h" />
     <ClInclude Include="include\imgui\imstb_textedit.h" />
     <ClInclude Include="include\imgui\imstb_truetype.h" />
-    <ClInclude Include="include\shaderDefines.h" />
+    <ClInclude Include="include\renderer\OpenGLRenderer.h" />
+    <ClInclude Include="include\renderer\Renderer.h" />
+    <ClInclude Include="include\SearchTex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

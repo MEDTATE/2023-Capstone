@@ -30,7 +30,7 @@ const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 900;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.0f, -0.5f);
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -39,12 +39,15 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-static bool antiAliasing = false;
-static bool fxaa = false;
-static bool smaa = false;
-static bool taa = false;
-static bool cmaa = false;
-bool pressed_Z = false;
+// AA variables
+static bool antiAliasing;
+static bool fxaa;
+static bool smaa;
+static bool taa;
+static bool cmaa;
+// fxaa = 1, smaa = 2, taa = 3, cmaa = 4
+// default = fxaa
+static int currentAA = 1;
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -147,7 +150,7 @@ int main()
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
     Shader smaaweightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaablendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
-    
+
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
         // positions   // texCoords
@@ -175,6 +178,9 @@ int main()
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
+    Model sponza("resources/objects/sponza/sponza.obj");
+
+    Model currentModel = container;
 
     modelShader.use();
     modelShader.setInt("texture_diffuse1", 0);
@@ -188,20 +194,23 @@ int main()
     smaaEdgeShader.setInt("colorTex", 0);
     smaaEdgeShader.setInt("predicationTex", 0);
 
-    smaaEdgeShader.setFloat("predicationThreshold", 0.0);
-    smaaEdgeShader.setFloat("predicationScale", 0.0);
-    smaaEdgeShader.setFloat("predicationStrength", 0.0);
+    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
+    smaaEdgeShader.setFloat("predicationScale", 2.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.4);
 
     smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-  /*  smaaweightShader.use();
+    smaaweightShader.use();
     smaaweightShader.setInt("edgesTex", 0);
     smaaweightShader.setInt("areaTex", 0);
     smaaweightShader.setInt("searchTex", 0);
 
-    smaaweightShader.setFloat("predicationThreshold", 0.0);
-    smaaweightShader.setFloat("predicationScale", 0.0);
-    smaaweightShader.setFloat("predicationStrength", 0.0);
+    smaaweightShader.setVec4("subsampleIndices", glm::vec4(1.0f, 1.0f, 1.0f, 0.0f));
+
+
+    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
+    smaaEdgeShader.setFloat("predicationScale", 2.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.4);
 
     smaaweightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
@@ -209,9 +218,9 @@ int main()
     smaablendShader.setInt("colorTex", 0);
     smaablendShader.setInt("blendTex", 0);
 
-    smaablendShader.setFloat("predicationThreshold", 0.0);
-    smaablendShader.setFloat("predicationScale", 0.0);
-    smaablendShader.setFloat("predicationStrength", 0.0);*/
+    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
+    smaaEdgeShader.setFloat("predicationScale", 2.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.4);
 
     smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
@@ -229,14 +238,14 @@ int main()
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-   
+
     // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-    
+
     // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
@@ -263,37 +272,92 @@ int main()
         // -----
         processInput(window);
 
-        // render your GUI
+        // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 220), 0);
+            ImGui::SetNextWindowSize(ImVec2(150, 270), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Anti Aliasing");
-            if (ImGui::BeginTable("split", 2))  {
-                ImGui::TableNextColumn(); ImGui::Checkbox("AA On", &antiAliasing);
+            if (ImGui::Checkbox("AA On", &antiAliasing)) {
+                switch (currentAA) {
+                    // remember which option was activated last time
+                case 1:
+                    fxaa = true;
+                    break;
+                case 2:
+                    smaa = true;
+                    break;
+                case 3:
+                    taa = true;
+                    break;
+                case 4:
+                    cmaa = true;
+                    break;
+                }
+            }
+
+            if (ImGui::BeginTable("split", 2)) {
+                ImGui::TableNextColumn();
                 ImGui::TableNextRow();
-                ImGui::TableNextColumn(); ImGui::Checkbox("FXAA", &fxaa);
-                ImGui::TableNextColumn(); ImGui::Checkbox("SMAA", &smaa);
-                ImGui::TableNextColumn(); ImGui::Checkbox("TAA", &taa);
-                ImGui::TableNextColumn(); ImGui::Checkbox("CMAA", &cmaa);
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("FXAA", &fxaa)) {
+                    smaa = taa = cmaa = false;
+                    currentAA = 1;
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("SMAA", &smaa)) {
+                    fxaa = taa = cmaa = false;
+                    currentAA = 2;
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("TAA", &taa)) {
+                    fxaa = smaa = cmaa = false;
+                    currentAA = 3;
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("CMAA", &cmaa)) {
+                    fxaa = smaa = taa = false;
+                    currentAA = 4;
+                }
+
+                // Bind to 'AA on' button
+                if (antiAliasing == false) {
+                    fxaa = false;
+                    smaa = false;
+                    taa = false;
+                    cmaa = false;
+                }
+
                 ImGui::EndTable();
             }
 
-            // Bind to 'AA on' button
-            if (antiAliasing == false) {
-                fxaa = false;
-                smaa = false;
-                taa = false;
-                cmaa = false;
-            }
-
+            // Change Viewpoint
             ImGui::SeparatorText("Viewpoint");
             if (ImGui::Button("1"))
                 changeViewpoint(1);
             ImGui::SameLine();
             if (ImGui::Button("2"))
                 changeViewpoint(2);
+            ImGui::SameLine();
+            if (ImGui::Button("3"))
+                changeViewpoint(3);
+
+            // Change Scene
+            const char* items[] = { "Container", "Sponza" };
+            static int item_current = 0;
+            ImGui::SeparatorText("Scene");
+            ImGui::Combo("Scene", &item_current, items, IM_ARRAYSIZE(items));
+
+            switch (item_current) {
+            case 0:
+                currentModel = container;
+                break;
+            case 1:
+                currentModel = sponza;
+                break;
+            }
+
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -302,27 +366,21 @@ int main()
             ImGui::End();
         }
 
-        // render
-        // ------
-        if (fxaa) {
+        if (antiAliasing)
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        }
-        if (smaa) {
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        }
-        else {
+        else
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
+
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
-        glClearColor(clear_color.x* clear_color.w, clear_color.y* clear_color.w, clear_color.z* clear_color.w, clear_color.w);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
         modelShader.use();
 
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         glm::mat4 view = camera.GetViewMatrix();
         modelShader.setMat4("projection", projection);
         modelShader.setMat4("view", view);
@@ -332,7 +390,7 @@ int main()
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
         modelShader.setMat4("model", model);
-        container.Draw(modelShader);
+        currentModel.Draw(modelShader);
 
         if (fxaa) {
             // now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
@@ -362,17 +420,17 @@ int main()
             glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            //smaaweightShader.use();
-            //glBindVertexArray(quadVAO);
-            //glDisable(GL_DEPTH_TEST);
-            //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-            //glDrawArrays(GL_TRIANGLES, 0, 6);
+            smaaweightShader.use();
+            glBindVertexArray(quadVAO);
+            glDisable(GL_DEPTH_TEST);
+            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            //smaablendShader.use();
-            //glBindVertexArray(quadVAO);
-            //glDisable(GL_DEPTH_TEST);
-            //glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-            //glDrawArrays(GL_TRIANGLES, 0, 6);
+            smaablendShader.use();
+            glBindVertexArray(quadVAO);
+            glDisable(GL_DEPTH_TEST);
+            glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+            glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
@@ -459,13 +517,13 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         firstMouse = false;
     }
 
-    
+
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
-    
+
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -498,19 +556,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
         printf("Pos: (%f, %f, %f), POV: (%f, %f)\n", x, y, z, yaw, pitch);
     }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        if (!pressed_Z)
-        {
-            pressed_Z = true;
-            
-        }
-        else if (pressed_Z)
-        {
-            pressed_Z = false;
-            camera.Zoom = 45.0f;
-        }
-    }
+
     /*
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
@@ -531,14 +577,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void changeViewpoint(int view)
 {
-    if (view == 1) 
+    if (view == 1)
+    {
+        camera.Position = glm::vec3(-35.0f, 10.0f, 0.0f);
+        camera.Yaw = -360.0f;
+        camera.Pitch = -0.5f;
+        camera.ProcessMouseMovement(0, 0);
+    }
+    if (view == 2)
     {
         camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
         camera.Yaw = 111.90;
         camera.Pitch = -6.60;
         camera.ProcessMouseMovement(0, 0);
     }
-    if (view == 2)
+    if (view == 3)
     {
         camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
         camera.Yaw = -40.60;

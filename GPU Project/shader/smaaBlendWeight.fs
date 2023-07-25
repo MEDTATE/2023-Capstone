@@ -27,6 +27,7 @@ uniform vec4 screenSize;
 
 uniform vec4 subsampleIndices;
 
+
 uniform float predicationThreshold;
 uniform float predicationScale;
 uniform float predicationStrength;
