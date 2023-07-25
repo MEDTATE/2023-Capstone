@@ -1,45 +1,133 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="include\imgui\imgui.cpp" />
-    <ClCompile Include="include\imgui\imgui_demo.cpp" />
-    <ClCompile Include="include\imgui\imgui_draw.cpp" />
-    <ClCompile Include="include\imgui\imgui_impl_glfw.cpp" />
-    <ClCompile Include="include\imgui\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="include\imgui\imgui_stdlib.cpp" />
-    <ClCompile Include="include\imgui\imgui_tables.cpp" />
-    <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="include\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_impl_glfw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_impl_opengl3.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_stdlib.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\fxaa3_11.h" />
-    <ClInclude Include="include\imgui\imconfig.h" />
-    <ClInclude Include="include\imgui\imgui.h" />
-    <ClInclude Include="include\imgui\imgui_impl_glfw.h" />
-    <ClInclude Include="include\imgui\imgui_impl_opengl3.h" />
-    <ClInclude Include="include\imgui\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="include\imgui\imgui_internal.h" />
-    <ClInclude Include="include\imgui\imgui_stdlib.h" />
-    <ClInclude Include="include\imgui\imstb_rectpack.h" />
-    <ClInclude Include="include\imgui\imstb_textedit.h" />
-    <ClInclude Include="include\imgui\imstb_truetype.h" />
-    <ClInclude Include="include\shaderDefines.h" />
+    <ClInclude Include="include\imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imgui_impl_glfw.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imgui_impl_opengl3.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imgui_impl_opengl3_loader.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imgui_stdlib.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imstb_rectpack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imstb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imgui\imstb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SearchTex.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AreaTex.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\renderer\Renderer.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\renderer\OpenGLRenderer.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="include\glew\include\GL\glew.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\basicModel.fs" />
-    <None Include="shader\basicModel.vs" />
-    <None Include="shader\basicScreen.fs" />
-    <None Include="shader\basicScreen.vs" />
-    <None Include="shader\cmaa.fs" />
-    <None Include="shader\cmaa.vs" />
-    <None Include="shader\fxaa_demo.vs" />
-    <None Include="shader\fxaa_demo.fs" />
-    <None Include="shader\smaaBlendWeight.vs" />
-    <None Include="shader\smaaEdge.fs" />
-    <None Include="shader\smaaEdge.vs" />
-    <None Include="shader\smaaNeighbor.fs" />
-    <None Include="shader\smaaNeighbor.vs" />
-    <None Include="shader\smaaBlendWeight.fs" />
+    <None Include="shader\basicModel.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\basicModel.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\basicScreen.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\basicScreen.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\cmaa.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\cmaa.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\fxaa_demo.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\fxaa_demo.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaBlendWeight.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaBlendWeight.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaEdge.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaEdge.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaNeighbor.fs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="shader\smaaNeighbor.vs">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header">
+      <UniqueIdentifier>{8cff9cf0-2126-4ce0-b684-2fab7833b51b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{e5a024ce-0e78-4089-926b-77f381ed9752}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{97417180-e818-40c7-bc4c-9f3ed53abc44}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
