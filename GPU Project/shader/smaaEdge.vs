@@ -26,10 +26,6 @@ THE SOFTWARE.
 uniform vec4 screenSize;
 
 #define SMAA_RT_METRICS screenSize
-#define SMAA_GLSL_4 1
-
-#define SMAA_INCLUDE_PS 0
-#define SMAA_INCLUDE_VS 1
 
 #define API_V_DIR(v) -(v)
 
@@ -55,10 +51,10 @@ vec2 triangleVertex(in int vertID, out vec2 texcoord)
 } 
 
 
-out vec2 texcoord;
-out vec4 offset0;
-out vec4 offset1;
-out vec4 offset2;
+layout (location = 0) out vec2 texcoord;
+layout (location = 1) out vec4 offset0;
+layout (location = 2) out vec4 offset1;
+layout (location = 3) out vec4 offset2;
 
 
 void main(void)

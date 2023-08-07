@@ -36,7 +36,6 @@ uniform vec4 screenSize;
 
 
 
-
 /**
  * Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
  * Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
@@ -1478,13 +1477,13 @@ void SMAASeparatePS(float4 position,
 
 
 
-out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 
-uniform SMAATexture2D(colorTex);
-uniform SMAATexture2D(blendTex);
+layout(binding = 0) uniform SMAATexture2D(colorTex);
+layout(binding = 1) uniform SMAATexture2D(blendTex);
 
-in vec2 texcoord;
-in vec4 offset;
+layout (location = 0) in vec2 texcoord;
+layout (location = 1) in vec4 offset;
 
 void main(void)
 {

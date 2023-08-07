@@ -1,7 +1,2 @@
-<<<<<<< HEAD
 PlatformToolSet=v143:VCToolArchitecture=Native64Bit:VCToolsVersion=14.30.30705:TargetPlatformVersion=10.0.19041.0:
-Debug|x64|C:\Users\wooji\Desktop\2023-Capstone-LWJ\2023-Capstone-LWJ\|
-=======
-PlatformToolSet=v143:VCToolArchitecture=Native64Bit:VCToolsVersion=14.35.32215:TargetPlatformVersion=10.0.22000.0:
-Debug|x64|C:\Users\medtate\Desktop\2023 Capstone\2023-Capstone\|
->>>>>>> 8dd0410172be56c6d196443d972d879582bea1b2
+Debug|x64|C:\Users\wooji\Desktop\capstone\2023-Capstone\|

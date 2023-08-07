@@ -50,7 +50,6 @@ uniform float predicationStrength;
 #define LinearSampler linearSampler
 #define PointSampler  nearestSampler
 
-
 /**
  * Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
  * Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
@@ -1492,31 +1491,31 @@ void SMAASeparatePS(float4 position,
 
 
 
-out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 
 
 #if EDGEMETHOD == 2
 
-uniform SMAATexture2D(depthTex);
+layout(binding = 1) uniform SMAATexture2D(depthTex);
 
 #else  // EDGEMETHOD
 
-uniform SMAATexture2D(colorTex);
+layout(binding = 1) uniform SMAATexture2D(colorTex);
 
 #endif  // EDGEMETHOD
 
 
 #if SMAA_PREDICATION
 
-uniform SMAATexture2D(predicationTex);
+layout(binding = 2) uniform SMAATexture2D(predicationTex);
 
 #endif  // SMAA_PREDICATION
 
 
-in vec2 texcoord;
-in vec4 offset0;
-in vec4 offset1;
-in vec4 offset2;
+layout (location = 0) in vec2 texcoord;
+layout (location = 1) in vec4 offset0;
+layout (location = 2) in vec4 offset1;
+layout (location = 3) in vec4 offset2;
 
 
 void main(void)

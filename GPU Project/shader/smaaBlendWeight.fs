@@ -41,6 +41,7 @@ uniform float predicationStrength;
 #define LinearSampler linearSampler
 #define PointSampler  nearestSampler
 
+
 /**
  * Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
  * Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
@@ -418,6 +419,8 @@ uniform float predicationStrength;
  *
  * Define SMAA_DISABLE_DIAG_DETECTION to disable diagonal processing.
  */
+
+#define SMAA_DISABLE_DIAG_DETECTION
 #ifndef SMAA_MAX_SEARCH_STEPS_DIAG
 #define SMAA_MAX_SEARCH_STEPS_DIAG 8
 #endif
@@ -1272,7 +1275,7 @@ float4 SMAABlendingWeightCalculationPS(float2 texcoord,
     float4 weights = float4(0.0, 0.0, 0.0, 0.0);
 
     float2 e = SMAASample(edgesTex, texcoord).rg;
-
+ 
     SMAA_BRANCH
     if (e.g > 0.0) { // Edge at north
         #if !defined(SMAA_DISABLE_DIAG_DETECTION)
@@ -1283,8 +1286,9 @@ float4 SMAABlendingWeightCalculationPS(float2 texcoord,
         // We give priority to diagonals, so if we find a diagonal we skip 
         // horizontal/vertical processing.
         SMAA_BRANCH
-        if (weights.r == -weights.g) { // weights.r + weights.g == 0.0
+        if (weights.r == -weights.g) { // weights.r + weights.g == 0.0       
         #endif
+      
 
         float2 d;
 
@@ -1317,7 +1321,7 @@ float4 SMAABlendingWeightCalculationPS(float2 texcoord,
         // Ok, we know how this pattern looks like, now it is time for getting
         // the actual area:
         weights.rg = SMAAArea(SMAATexturePass2D(areaTex), sqrt_d, e1, e2, subsampleIndices.y);
-
+      
         // Fix corners:
         coords.y = texcoord.y;
         SMAADetectHorizontalCornerPattern(SMAATexturePass2D(edgesTex), weights.rg, coords.xyzy, d);
@@ -1326,6 +1330,7 @@ float4 SMAABlendingWeightCalculationPS(float2 texcoord,
         } else
             e.r = 0.0; // Skip vertical processing.
         #endif
+        
     }
 
     SMAA_BRANCH
@@ -1364,6 +1369,9 @@ float4 SMAABlendingWeightCalculationPS(float2 texcoord,
     }
 
     return weights;
+    // For debuging, replace the upper line with one of the following lines. 
+    // return texture(searchTex, texcoord);
+    // return texture(areaTex, texcoord);
 }
 
 //-----------------------------------------------------------------------------
@@ -1482,17 +1490,17 @@ void SMAASeparatePS(float4 position,
 
 
 
-out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 
-uniform SMAATexture2D(edgesTex);
-uniform SMAATexture2D(areaTex);
-uniform SMAATexture2D(searchTex);
+layout (binding = 0) uniform SMAATexture2D(edgesTex);
+layout (binding = 1) uniform SMAATexture2D(areaTex);
+layout (binding = 2) uniform SMAATexture2D(searchTex);
 
-in vec2 texcoord;
-in vec2 pixcoord;
-in vec4 offset0;
-in vec4 offset1;
-in vec4 offset2;
+layout (location = 0) in vec2 texcoord;
+layout (location = 1) in vec2 pixcoord;
+layout (location = 2) in vec4 offset0;
+layout (location = 3) in vec4 offset1;
+layout (location = 4) in vec4 offset2;
 
 void main(void)
 {
@@ -1500,5 +1508,5 @@ void main(void)
     offsets[0] = offset0;
     offsets[1] = offset1;
     offsets[2] = offset2;
-    outColor = SMAABlendingWeightCalculationPS(texcoord, pixcoord, offsets, edgesTex, areaTex, searchTex, subsampleIndices);
+    outColor = SMAABlendingWeightCalculationPS(texcoord, pixcoord, offsets, edgesTex, areaTex, searchTex, subsampleIndices);   
 }

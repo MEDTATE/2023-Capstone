@@ -45,8 +45,8 @@ void SMAANeighborhoodBlendingVS(vec2 texcoord,
     offset = mad(screenSize.xyxy, vec4(1.0, 0.0, 0.0, API_V_DIR(1.0)), texcoord.xyxy);
 }
 
-out vec2 texcoord;
-out vec4 offset;
+layout (location = 0) out vec2 texcoord;
+layout (location = 1) out vec4 offset;
 
 void main(void)
 {
