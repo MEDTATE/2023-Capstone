@@ -17,6 +17,7 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
+#include <iomanip>
 #include <AreaTex.h>
 #include <SearchTex.h>
 
@@ -347,10 +348,36 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
+    // fps counter
+    // -----------
+    double prevTime = 0.0;
+    double crntTime = 0.0;
+    double timeDiff;
+    unsigned int counter = 0;
+    std::string frameDisplay;
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
+        // frame counter implementation
+        // -----------------------------
+        crntTime = glfwGetTime();
+        timeDiff = crntTime - prevTime;
+        counter++;
+        if (timeDiff >= 1.0 / 30.0)
+        {
+            double FPS = (1.0 / timeDiff) * counter;
+            double ms = (timeDiff / counter) * 1000; 
+
+            std::stringstream fpsStream, msStream;
+            fpsStream << std::fixed << std::setprecision(1) << FPS;
+            msStream << std::fixed << std::setprecision(1) << ms;
+            frameDisplay = fpsStream.str() + "FPS/ " + msStream.str() + "ms";
+
+            prevTime = crntTime;
+            counter = 0;
+        }
         // per-frame time logic
         // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -371,6 +398,10 @@ int main()
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 270), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+            
+            ImGui::SeparatorText("Frame Counter");
+
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), frameDisplay.c_str());
 
             ImGui::SeparatorText("Anti Aliasing");
             if (ImGui::Checkbox("AA On", &antiAliasing)) {
