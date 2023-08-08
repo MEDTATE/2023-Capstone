@@ -27,6 +27,33 @@ THE SOFTWARE.
 #define mad(a, b, c) fma(a, b, c)
 
 uniform vec4 screenSize;
+uniform float SMAA_QUALITY;
+
+#if SMAA_QUALITY == 0
+#define SMAA_PRESET_LOW
+#define SMAA_THRESHOLD 0.15
+#define SMAA_MAX_SEARCH_STEPS 4
+#define SMAA_DISABLE_DIAG_DETECTION
+#define SMAA_DISABLE_CORNER_DETECTION
+#elif SMAA_QUALITY == 1
+#define SMAA_PRESET_MEDIUM
+#define SMAA_THRESHOLD 0.1
+#define SMAA_MAX_SEARCH_STEPS 8
+#define SMAA_DISABLE_DIAG_DETECTION
+#define SMAA_DISABLE_CORNER_DETECTION
+#elif SMAA_QUALITY == 2
+#define SMAA_PRESET_HIGH
+#define SMAA_THRESHOLD 0.1
+#define SMAA_MAX_SEARCH_STEPS 16
+#define SMAA_MAX_SEARCH_STEPS_DIAG 8
+#define SMAA_CORNER_ROUNDING 25
+#elif SMAA_QUALITY == 3
+#define SMAA_PRESET_ULTRA
+#define SMAA_THRESHOLD 0.05
+#define SMAA_MAX_SEARCH_STEPS 32
+#define SMAA_MAX_SEARCH_STEPS_DIAG 16
+#define SMAA_CORNER_ROUNDING 25
+#endif
 
 vec2 triangleVertex(in int vertID, out vec2 texcoord)
 {

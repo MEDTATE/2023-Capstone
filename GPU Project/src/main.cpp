@@ -287,6 +287,11 @@ int main()
     fxaaShader.setInt("colorTex", 0);
     fxaaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
+    /*
+    SMAA Shader
+    */
+    float smaa_quailty = 3; // (index, sample) : (0, 4), (1, 8), (2, 16), (3, 32)
+
     // Edge Shader
     // -----------
     smaaEdgeShader.use();
@@ -299,6 +304,7 @@ int main()
     smaaEdgeShader.setFloat("predicationStrength", 0.0);*/
 
     smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaEdgeShader.setFloat("SMAA_QUALITY", smaa_quailty);
 
     // Weight Shader
     // -------------
@@ -312,6 +318,7 @@ int main()
     smaaweightShader.setFloat("predicationStrength", 0.0);*/
 
     smaaweightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaweightShader.setFloat("SMAA_QUALITY", smaa_quailty);
 
     // Blend Shader
     // ------------
@@ -324,6 +331,7 @@ int main()
     smaablendShader.setFloat("predicationStrength", 0.0);*/
 
     smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaablendShader.setFloat("SMAA_QUALITY", smaa_quailty);
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions   // texCoords
