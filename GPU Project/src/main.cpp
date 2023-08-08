@@ -275,7 +275,7 @@ int main()
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
-    Model sponza("resources/objects/sponza/sponza.obj");
+    Model sponza("resources/objects/sponza-master/sponza.obj");
 
     Model currentModel = container;
 

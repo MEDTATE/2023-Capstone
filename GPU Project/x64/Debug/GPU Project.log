@@ -1,6 +1,17 @@
-﻿  main.cpp
-C:\Copy\Projects\2023-Capstone\GPU Project\src\main.cpp(739,28): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\Copy\Projects\2023-Capstone\GPU Project\src\main.cpp(740,29): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\Copy\Projects\2023-Capstone\GPU Project\src\main.cpp(746,28): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\Copy\Projects\2023-Capstone\GPU Project\src\main.cpp(747,29): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-  GPU Project.vcxproj -> C:\Copy\Projects\2023-Capstone\x64\Debug\GPU Project.exe
+﻿  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_glfw.cpp
+  imgui_impl_opengl3.cpp
+  imgui_stdlib.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  main.cpp
+C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(739,28): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(740,29): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(746,28): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(747,29): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
+  코드를 생성하고 있습니다...
+  glad.c
+LINK : warning LNK4098: 'MSVCRT' defaultlib가 다른 라이브러리와 충돌합니다. /NODEFAULTLIB:library를 사용하십시오.
+  GPU Project.vcxproj -> C:\smu_4_1\2023-capstone-main\2023-Capstone\x64\Debug\GPU Project.exe
