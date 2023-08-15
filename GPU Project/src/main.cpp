@@ -46,29 +46,33 @@ float lastFrame = 0.0f;
 
 // AA variables
 static bool antiAliasing;
+static bool msaa;
 static bool fxaa;
 static bool smaa;
 static bool taa;
-static bool cmaa;
-// fxaa = 1, smaa = 2, taa = 3, cmaa = 4
+// fxaa = 1, smaa = 2, taa = 3, msaa = 4
 // default = fxaa
 static int currentAA = 1;
 
 GLuint colorTex;
+GLuint multiSamplingTex;
 GLuint edgeTex;
 GLuint blendTex;
 GLuint areaTex;
 GLuint searchTex;
 
 GLuint colorFBO;
+GLuint multisampledFBO;
 GLuint edgeFBO;
 GLuint blendFBO;
 
 GLuint colorRBO;
-//GLuint edgeRBO;
-//GLuint blendRBO;
+GLuint multiSampledRBO;
 
 GLuint quadVAO, quadVBO;
+
+// number of samples for texture in MSAA. 4 in default
+GLuint msaaSamples = 4;
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -86,9 +90,6 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // num of samples for MSAA 
-    //glfwWindowHint(GLFW_SAMPLES, 4);
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -175,6 +176,10 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+    glGenTextures(1, &multiSamplingTex);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+
     glGenTextures(1, &edgeTex);
     glBindTexture(GL_TEXTURE_2D, edgeTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -227,6 +232,7 @@ int main()
 
     delete[] buffer1;
     glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
     // Initialize FBOs
     // ---------------
@@ -239,38 +245,36 @@ int main()
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, colorRBO);
 
+    glGenFramebuffers(1, &multisampledFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, multisampledFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex, 0);
+
+    glGenRenderbuffers(1, &multiSampledRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multiSampledRBO);
+
     glGenFramebuffers(1, &edgeFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, edgeTex, 0);
 
-    /*
-    glGenRenderbuffers(1, &edgeRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, edgeRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, edgeRBO);
-    */
-
     glGenFramebuffers(1, &blendFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blendTex, 0);
-
-    /*
-    glGenRenderbuffers(1, &blendRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, blendRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, blendRBO);
-    */
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // build and compile shaders
     // -------------------------
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
+    Shader screenShader("shader/basicScreen.vs", "shader/basicScreen.fs"); // basic screen shader used for MSAA
+
     Shader fxaaShader("shader/fxaa_demo.vs", "shader/fxaa_demo.fs");
 
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
-    Shader smaaweightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
-    Shader smaablendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
+    Shader smaaWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
+    Shader smaaBlendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
     
     // load models
     // -----------
@@ -281,6 +285,9 @@ int main()
 
     modelShader.use();
     modelShader.setInt("texture_diffuse1", 0);
+
+    screenShader.use();
+    screenShader.setInt("screenTexture", 0);
 
     // FXAA Shader
     // -----------
@@ -303,28 +310,28 @@ int main()
 
     // Weight Shader
     // -------------
-    smaaweightShader.use();
-    smaaweightShader.setInt("edgesTex", 0);
-    smaaweightShader.setInt("areaTex", 1);
-    smaaweightShader.setInt("searchTex", 2);
+    smaaWeightShader.use();
+    smaaWeightShader.setInt("edgesTex", 0);
+    smaaWeightShader.setInt("areaTex", 1);
+    smaaWeightShader.setInt("searchTex", 2);
 
     /*smaaweightShader.setFloat("predicationThreshold", 0.0);
     smaaweightShader.setFloat("predicationScale", 0.0);
     smaaweightShader.setFloat("predicationStrength", 0.0);*/
 
-    smaaweightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     // Blend Shader
     // ------------
-    smaablendShader.use();
-    smaablendShader.setInt("colorTex", 0);
-    smaablendShader.setInt("blendTex", 1);
+    smaaBlendShader.use();
+    smaaBlendShader.setInt("colorTex", 0);
+    smaaBlendShader.setInt("blendTex", 1);
 
     /*smaablendShader.setFloat("predicationThreshold", 0.0);
     smaablendShader.setFloat("predicationScale", 0.0);
     smaablendShader.setFloat("predicationStrength", 0.0);*/
 
-    smaablendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions   // texCoords
@@ -396,7 +403,7 @@ int main()
         // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 270), 0);
+            ImGui::SetNextWindowSize(ImVec2(150, 350), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
             
             ImGui::SeparatorText("Frame Counter");
@@ -417,7 +424,7 @@ int main()
                     taa = true;
                     break;
                 case 4:
-                    cmaa = true;
+                    msaa = true;
                     break;
                 }
             }
@@ -427,21 +434,21 @@ int main()
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
-                    smaa = taa = cmaa = false;
+                    smaa = taa = msaa = false;
                     currentAA = 1;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
-                    fxaa = taa = cmaa = false;
+                    fxaa = taa = msaa = false;
                     currentAA = 2;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("TAA", &taa)) {
-                    fxaa = smaa = cmaa = false;
+                    fxaa = smaa = msaa = false;
                     currentAA = 3;
                 }
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("CMAA", &cmaa)) {
+                if (ImGui::Checkbox("MSAA", &msaa)) {
                     fxaa = smaa = taa = false;
                     currentAA = 4;
                 }
@@ -451,11 +458,41 @@ int main()
                     fxaa = false;
                     smaa = false;
                     taa = false;
-                    cmaa = false;
+                    msaa = false;
                 }
 
                 ImGui::EndTable();
             }
+
+            // MSAA Quality
+            const char* qualities[] = { "2X", "4X", "8X", "16X"};
+            static int currentQuality = 1;
+            ImGui::SeparatorText("MSAA Quality");
+            ImGui::Combo("##MSAA Quality", &currentQuality, qualities, IM_ARRAYSIZE(qualities));
+
+            switch (currentQuality) {
+            case 0:
+                msaaSamples = 2;
+                break;
+            case 1:
+                msaaSamples = 4;
+                break;
+            case 2:
+                msaaSamples = 8;
+                break;
+            case 3:
+                msaaSamples = 16;
+                break;
+            }
+
+            // Change the actual number of samples
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+
+            glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
             // Change Viewpoint
             ImGui::SeparatorText("Viewpoint");
@@ -469,12 +506,12 @@ int main()
                 changeViewpoint(3);
 
             // Change Scene
-            const char* items[] = { "Container", "Sponza" };
-            static int item_current = 0;
+            const char* scenes[] = { "Container", "Sponza" };
+            static int currentScene = 0;
             ImGui::SeparatorText("Scene");
-            ImGui::Combo("Scene", &item_current, items, IM_ARRAYSIZE(items));
+            ImGui::Combo("Scene", &currentScene, scenes, IM_ARRAYSIZE(scenes));
 
-            switch (item_current) {
+            switch (currentScene) {
             case 0:
                 currentModel = container;
                 break;
@@ -490,10 +527,17 @@ int main()
             ImGui::End();
         }
 
-        if (antiAliasing)
-            glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
-        else
+        if (antiAliasing) {
+            if (msaa) {
+                glBindFramebuffer(GL_FRAMEBUFFER, multisampledFBO);
+            }
+            else {
+                glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
+            }
+        }
+        else {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
 
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
@@ -516,25 +560,41 @@ int main()
         modelShader.setMat4("model", model);
         currentModel.Draw(modelShader);
 
+        if (msaa) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDisable(GL_DEPTH_TEST);
+
+            screenShader.use();
+            glBindVertexArray(quadVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
         if (fxaa) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
 
             fxaaShader.use();
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, colorTex);	// use the color attachment texture as the texture of the quad plane
+            glBindTexture(GL_TEXTURE_2D, colorTex);	
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
         if (smaa) {
             /* EDGE DETECTION PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);           
-            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            glDisable(GL_DEPTH_TEST); 
             // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
             glClear(GL_COLOR_BUFFER_BIT);
 
             smaaEdgeShader.use();
@@ -550,10 +610,10 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
         
             // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
             glClear(GL_COLOR_BUFFER_BIT);
 
-            smaaweightShader.use();
+            smaaWeightShader.use();
             glBindVertexArray(quadVAO);
 
             glActiveTexture(GL_TEXTURE0);
@@ -569,7 +629,7 @@ int main()
 
             /*
             /* NEIGHBORHOOD BLENDING PASS */           
-            smaablendShader.use();
+            smaaBlendShader.use();
 
             glBindVertexArray(quadVAO);
 

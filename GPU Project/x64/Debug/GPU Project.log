@@ -1,17 +1,2 @@
-﻿  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_impl_glfw.cpp
-  imgui_impl_opengl3.cpp
-  imgui_stdlib.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  main.cpp
-C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(739,28): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(740,29): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(746,28): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-C:\smu_4_1\2023-capstone-main\2023-Capstone\GPU Project\src\main.cpp(747,29): warning C4305: '=': 'double'에서 'float'(으)로 잘립니다.
-  코드를 생성하고 있습니다...
-  glad.c
-LINK : warning LNK4098: 'MSVCRT' defaultlib가 다른 라이브러리와 충돌합니다. /NODEFAULTLIB:library를 사용하십시오.
-  GPU Project.vcxproj -> C:\smu_4_1\2023-capstone-main\2023-Capstone\x64\Debug\GPU Project.exe
+﻿  main.cpp
+C:\Users\wooji\Desktop\capstone\2023-Capstone\GPU Project\src\main.cpp : fatal error C1041: 프로그램 데이터베이스 'C:\Users\wooji\Desktop\capstone\2023-Capstone\GPU Project\x64\Debug\vc143.idb'을(를) 열 수 없습니다. 여러 CL.EXE에서 동일한 .PDB 파일에 쓰는 경우 /FS를 사용하십시오.
