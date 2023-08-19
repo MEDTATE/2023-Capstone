@@ -158,6 +158,8 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ImageShader.fs" />
+    <None Include="ImageShader.vs" />
     <None Include="shader\basicModel.fs" />
     <None Include="shader\basicModel.vs" />
     <None Include="shader\basicScreen.fs" />
