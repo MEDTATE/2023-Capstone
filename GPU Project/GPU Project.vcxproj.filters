@@ -118,6 +118,12 @@
     <None Include="shader\smaaNeighbor.vs">
       <Filter>Shader</Filter>
     </None>
+    <None Include="ImageShader.vs">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="ImageShader.fs">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

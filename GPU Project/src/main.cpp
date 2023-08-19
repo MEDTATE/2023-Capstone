@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
 #include <learnopengl/shader.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
@@ -39,6 +40,9 @@ Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+std::ostringstream css;
+
+
 
 // timing
 float deltaTime = 0.0f;
@@ -61,6 +65,8 @@ GLuint blendTex;
 GLuint areaTex;
 GLuint searchTex;
 
+GLuint imageTex;
+
 GLuint colorFBO;
 GLuint multisampledFBO;
 GLuint edgeFBO;
@@ -78,6 +84,8 @@ static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
+
+
 
 int main()
 {
@@ -269,13 +277,14 @@ int main()
     // -------------------------
     Shader modelShader("shader/basicModel.vs", "shader/basicModel.fs");
     Shader screenShader("shader/basicScreen.vs", "shader/basicScreen.fs"); // basic screen shader used for MSAA
+    Shader imageShader("shader/ImageShader.vs", "shader/ImageShader.fs");
 
     Shader fxaaShader("shader/fxaa_demo.vs", "shader/fxaa_demo.fs");
 
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
     Shader smaaWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaaBlendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
-    
+
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
@@ -286,8 +295,42 @@ int main()
     modelShader.use();
     modelShader.setInt("texture_diffuse1", 0);
 
+    imageShader.use();
+    imageShader.setInt("texture_diffuse1", 0); // 텍스처 유닛 인덱스 설정
+
+
     screenShader.use();
     screenShader.setInt("screenTexture", 0);
+
+    // load Image
+    // -----------
+    int width, height, numChannels;
+    unsigned char* imageData = stbi_load("resources/Images/SyntheticTests.png", &width, &height, &numChannels, 0);
+
+    if (!imageData)
+    {
+        std::cout << "Failed to load image" << std::endl;
+        return -1;
+    }
+    // Generate and bind OpenGL texture
+    glGenTextures(1, &imageTex);
+    glBindTexture(GL_TEXTURE_2D, imageTex);
+
+    // Set texture wrapping and filtering options
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Upload image data to texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, imageData);
+    //glGenerateMipmap(GL_TEXTURE_2D);
+
+
+    // Free image data after uploading to texture
+    stbi_image_free(imageData);
+
+    int IsImage = 0;
 
     // FXAA Shader
     // -----------
@@ -334,14 +377,14 @@ int main()
     smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-    // positions   // texCoords
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
 
-    -1.0f,  1.0f,  0.0f, 1.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 1.0f
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
     };
 
     // screen quad VAO
@@ -375,7 +418,7 @@ int main()
         if (timeDiff >= 1.0 / 30.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
-            double ms = (timeDiff / counter) * 1000; 
+            double ms = (timeDiff / counter) * 1000;
 
             std::stringstream fpsStream, msStream;
             fpsStream << std::fixed << std::setprecision(1) << FPS;
@@ -400,12 +443,13 @@ int main()
         // -----
         processInput(window);
 
+
         // render GUI
         {
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 350), 0);
-            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
-            
+            ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Control Panel" and append into it.
+
             ImGui::SeparatorText("Frame Counter");
 
             ImGui::TextColored(ImVec4(1, 1, 0, 1), frameDisplay.c_str());
@@ -465,7 +509,7 @@ int main()
             }
 
             // MSAA Quality
-            const char* qualities[] = { "2X", "4X", "8X", "16X"};
+            const char* qualities[] = { "2X", "4X", "8X", "16X" };
             static int currentQuality = 1;
             ImGui::SeparatorText("MSAA Quality");
             ImGui::Combo("##MSAA Quality", &currentQuality, qualities, IM_ARRAYSIZE(qualities));
@@ -506,17 +550,25 @@ int main()
                 changeViewpoint(3);
 
             // Change Scene
-            const char* scenes[] = { "Container", "Sponza" };
+            const char* scenes[] = { "Container", "Sponza", "image"};
             static int currentScene = 0;
             ImGui::SeparatorText("Scene");
             ImGui::Combo("Scene", &currentScene, scenes, IM_ARRAYSIZE(scenes));
-
             switch (currentScene) {
             case 0:
+                IsImage = 0;
                 currentModel = container;
                 break;
             case 1:
+                IsImage = 0;
                 currentModel = sponza;
+                break;
+            case 2:
+                IsImage = 1;
+                camera.Position = glm::vec3(-0.122459f, 0.039916f, 5.372975f);
+                camera.Yaw = -89.200050f;
+                camera.Pitch = -0.900008;
+                camera.ProcessMouseMovement(0, 0);
                 break;
             }
 
@@ -544,8 +596,8 @@ int main()
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // don't forget to enable shader before setting uniforms
-        modelShader.use();
+
+
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
@@ -553,12 +605,41 @@ int main()
         modelShader.setMat4("projection", projection);
         modelShader.setMat4("view", view);
 
-        // render the loaded model
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
-        modelShader.setMat4("model", model);
-        currentModel.Draw(modelShader);
+        if (IsImage == 0)
+        {        
+            // don't forget to enable shader before setting uniforms
+            modelShader.use();
+            // render the loaded model
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+            model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
+            modelShader.setMat4("model", model);
+            currentModel.Draw(modelShader);
+        }
+        else
+        {
+            imageShader.use();
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            // render the loaded model
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+            model = glm::scale(model, glm::vec3(2.15f, 2.15f, 1.0f));	// scale 
+
+            // projection matrix (needed for final 2D views)
+            //glm::mat4 projection = glm::ortho(0, width, height, 0, 0, 1000);
+
+            modelShader.setMat4("projection", projection);
+            imageShader.setMat4("model", model);
+
+            // 이미지를 바인딩한 텍스처 유닛을 활성화
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, imageTex);
+
+            // 쿼드VAO 바인딩 및 그리기
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
 
         if (msaa) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
@@ -586,15 +667,15 @@ int main()
             fxaaShader.use();
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, colorTex);	
+            glBindTexture(GL_TEXTURE_2D, colorTex);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
         if (smaa) {
             /* EDGE DETECTION PASS */
-            glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);           
-            glDisable(GL_DEPTH_TEST); 
+            glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
+            glDisable(GL_DEPTH_TEST);
             // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             smaaEdgeShader.use();
@@ -608,9 +689,9 @@ int main()
 
             /* BLENDING WEIGHT PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
-        
+
             // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             smaaWeightShader.use();
@@ -628,7 +709,7 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             /*
-            /* NEIGHBORHOOD BLENDING PASS */           
+            /* NEIGHBORHOOD BLENDING PASS */
             smaaBlendShader.use();
 
             glBindVertexArray(quadVAO);
@@ -641,6 +722,7 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
         }
+
 
 
         // Render dear imgui into screen
@@ -808,3 +890,4 @@ void changeViewpoint(int view)
         camera.ProcessMouseMovement(0, 0);
     }
 }
+
