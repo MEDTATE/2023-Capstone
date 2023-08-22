@@ -721,8 +721,12 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
@@ -746,8 +750,12 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorTex);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
@@ -829,8 +837,12 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
