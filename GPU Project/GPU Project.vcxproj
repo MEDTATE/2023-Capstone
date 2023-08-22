@@ -174,6 +174,8 @@
     <None Include="shader\smaaEdge.vs" />
     <None Include="shader\smaaNeighbor.fs" />
     <None Include="shader\smaaNeighbor.vs" />
+    <None Include="shader\temporal.fs" />
+    <None Include="shader\temporal.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\AreaTex.h" />

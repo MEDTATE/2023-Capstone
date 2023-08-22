@@ -70,12 +70,18 @@ GLuint blendTex;
 GLuint areaTex;
 GLuint searchTex;
 
+GLuint currentTex;
+GLuint previousTex;
+
 GLuint imageTex;
 
 GLuint colorFBO;
 GLuint multisampledFBO;
 GLuint edgeFBO;
 GLuint blendFBO;
+
+GLuint currentFBO;
+GLuint previousFBO;
 
 GLuint colorRBO;
 GLuint multiSampledRBO;
@@ -227,6 +233,22 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+    glGenTextures(1, &currentTex);
+    glBindTexture(GL_TEXTURE_2D, currentTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenTextures(1, &previousTex);
+    glBindTexture(GL_TEXTURE_2D, previousTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
     // load Image
     // -----------
     int width, height, numChannels;
@@ -314,6 +336,14 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blendTex, 0);
 
+    glGenFramebuffers(1, &currentFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTex, 0);
+
+    glGenFramebuffers(1, &previousFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, previousTex, 0);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // build and compile shaders
@@ -327,7 +357,9 @@ int main()
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
     Shader smaaWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaaBlendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
-    
+
+    Shader taaShader("shader/temporal.vs", "shader/temporal.fs");
+
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
@@ -388,15 +420,22 @@ int main()
 
     smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-    // positions   // texCoords
-    -1.0f,  1.0f,  0.0f, 1.0f,
-    -1.0f, -1.0f,  0.0f, 0.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
+    taaShader.use();
+    taaShader.setInt("currentTex", 0);
+    taaShader.setInt("previousTex", 1);
+    //taaShader.setInt("velocityTex", 0);
 
-    -1.0f,  1.0f,  0.0f, 1.0f,
-     1.0f, -1.0f,  1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f, 1.0f
+    taaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+
+    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
     };
 
     // screen quad VAO
@@ -422,7 +461,7 @@ int main()
         if (timeDiff >= 1.0 / 30.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
-            double ms = (timeDiff / counter) * 1000; 
+            double ms = (timeDiff / counter) * 1000;
 
             std::stringstream fpsStream, msStream;
             fpsStream << std::fixed << std::setprecision(1) << FPS;
@@ -452,7 +491,7 @@ int main()
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
-            
+
             ImGui::SeparatorText("Frame Counter");
 
             ImGui::TextColored(ImVec4(1, 1, 0, 1), frameDisplay.c_str());
@@ -481,22 +520,21 @@ int main()
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("MSAA", &msaa)) {
-                    fxaa = smaa = taa = false;
+                    fxaa = smaa = false;
                     currentAA = 1;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
-                    smaa = taa = msaa = false;
+                    smaa = msaa = false;
                     currentAA = 2;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
-                    fxaa = taa = msaa = false;
+                    fxaa = msaa = false;
                     currentAA = 3;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("TAA", &taa)) {
-                    fxaa = smaa = msaa = false;
                     currentAA = 4;
                 }
 
@@ -574,7 +612,7 @@ int main()
                 changeViewpoint(3);
 
             // Change Scene
-            const char* scenes[] = { "Container", "Sponza", "Image"};
+            const char* scenes[] = { "Container", "Sponza", "Image" };
             static int currentScene = 0;
             ImGui::SeparatorText("Scene");
             ImGui::Combo("Scene", &currentScene, scenes, IM_ARRAYSIZE(scenes));
@@ -660,6 +698,13 @@ int main()
         }
 
         if (msaa) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -674,8 +719,19 @@ int main()
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
         }
         if (fxaa) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -685,15 +741,27 @@ int main()
             fxaaShader.use();
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, colorTex);	
+            glBindTexture(GL_TEXTURE_2D, colorTex);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (smaa) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
             /* EDGE DETECTION PASS */
-            glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);           
-            glDisable(GL_DEPTH_TEST); 
+            glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
+            glDisable(GL_DEPTH_TEST);
             // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             smaaEdgeShader.use();
@@ -714,9 +782,9 @@ int main()
 
             /* BLENDING WEIGHT PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
-        
+
             // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             smaaWeightShader.use();
@@ -741,7 +809,7 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             /*
-            /* NEIGHBORHOOD BLENDING PASS */           
+            /* NEIGHBORHOOD BLENDING PASS */
             smaaBlendShader.use();
             // set SMAA quality
             smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaQuality].threshold);
@@ -759,6 +827,27 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        }
+        if (taa) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            taaShader.use();
+            glBindVertexArray(quadVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, currentTex);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, previousTex);
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
