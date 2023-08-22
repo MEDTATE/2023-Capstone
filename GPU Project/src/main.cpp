@@ -73,7 +73,8 @@ GLuint imageTex;
 GLuint areaTex;
 GLuint searchTex;
 
-GLuint imageTex;
+GLuint currentTex;
+GLuint previousTex;
 
 GLuint colorFBO;
 GLuint multisampledFBO;
@@ -365,6 +366,8 @@ int main()
     Shader smaaWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaaBlendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
     
+    Shader taaShader("shader/temporal.vs", "shader/temporal.fs");
+    
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
@@ -427,6 +430,15 @@ int main()
 
     smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
+    // TAA Shader
+    // ------------
+    taaShader.use();
+    taaShader.setInt("currentTex", 0);
+    taaShader.setInt("previousTex", 1);
+    taaShader.setInt("velocityTex", 2);
+
+    taaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions   // texCoords
     -1.0f,  1.0f,  0.0f, 1.0f,
@@ -499,7 +511,7 @@ int main()
         // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
+            ImGui::SetNextWindowSize(ImVec2(200, 500), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
             
             ImGui::SeparatorText("Frame Counter");
@@ -539,21 +551,16 @@ int main()
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
-                    smaa = taa = msaa = false;
+                    smaa = msaa = false;
                     currentAA = 2;
                     outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
-                    fxaa = taa = msaa = false;
+                    fxaa = msaa = false;
                     currentAA = 3;
                     outputFile << "AA Method : SMAA " << std::endl;
-                }
-                ImGui::TableNextColumn();
-                if (ImGui::Checkbox("TAA", &taa)) {
-                    fxaa = smaa = msaa = false;
-                    currentAA = 4;
                 }
 
                 // Bind to 'AA on' button
@@ -779,6 +786,13 @@ int main()
 
         if (msaa) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
@@ -803,6 +817,13 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (fxaa) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -825,6 +846,13 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (smaa) {
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
             /* EDGE DETECTION PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
             glDisable(GL_DEPTH_TEST);
@@ -894,6 +922,30 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        if (taa) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            taaShader.use();
+            glBindVertexArray(quadVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, currentTex);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, previousTex);
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
