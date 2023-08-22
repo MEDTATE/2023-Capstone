@@ -389,6 +389,10 @@ int main()
     smaaEdgeShader.setInt("colorTex", 0);
     //smaaEdgeShader.setInt("predicationTex", 0);
 
+    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
+    smaaEdgeShader.setFloat("predicationScale", 2.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.4);
+
     smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     // Weight Shader
@@ -398,6 +402,12 @@ int main()
     smaaWeightShader.setInt("areaTex", 1);
     smaaWeightShader.setInt("searchTex", 2);
 
+    smaaWeightShader.setVec4("subsampleIndices", glm::vec4(1.0f, 1.0f, 1.0f, 0.0f));
+
+    smaaWeightShader.setFloat("predicationThreshold", 0.01);
+    smaaWeightShader.setFloat("predicationScale", 2.0);
+    smaaWeightShader.setFloat("predicationStrength", 0.4);
+
     smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     // Blend Shader
@@ -406,6 +416,10 @@ int main()
     smaaBlendShader.setInt("colorTex", 0);
     smaaBlendShader.setInt("blendTex", 1);
 
+    smaaBlendShader.setFloat("predicationThreshold", 0.01);
+    smaaBlendShader.setFloat("predicationScale", 2.0);
+    smaaBlendShader.setFloat("predicationStrength", 0.4);
+
     smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     // TAA Shader
@@ -413,7 +427,7 @@ int main()
     taaShader.use();
     taaShader.setInt("currentTex", 0);
     taaShader.setInt("previousTex", 1);
-    //taaShader.setInt("velocityTex", 0);
+    taaShader.setInt("velocityTex", 2);
 
     taaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
@@ -479,7 +493,7 @@ int main()
         // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(200, 400), 0);
+            ImGui::SetNextWindowSize(ImVec2(200, 450), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Frame Counter");
@@ -676,6 +690,8 @@ int main()
         }
         else {
             imageShader.use();
+            imageShader.setMat4("projection", projection);
+            imageShader.setMat4("view", view);
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             // render the loaded model
