@@ -389,10 +389,6 @@ int main()
     smaaEdgeShader.setInt("colorTex", 0);
     //smaaEdgeShader.setInt("predicationTex", 0);
 
-    /*smaaEdgeShader.setFloat("predicationThreshold", 0.0);
-    smaaEdgeShader.setFloat("predicationScale", 0.0);
-    smaaEdgeShader.setFloat("predicationStrength", 0.0);*/
-
     smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     // Weight Shader
@@ -402,10 +398,6 @@ int main()
     smaaWeightShader.setInt("areaTex", 1);
     smaaWeightShader.setInt("searchTex", 2);
 
-    /*smaaweightShader.setFloat("predicationThreshold", 0.0);
-    smaaweightShader.setFloat("predicationScale", 0.0);
-    smaaweightShader.setFloat("predicationStrength", 0.0);*/
-
     smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
     // Blend Shader
@@ -414,12 +406,10 @@ int main()
     smaaBlendShader.setInt("colorTex", 0);
     smaaBlendShader.setInt("blendTex", 1);
 
-    /*smaablendShader.setFloat("predicationThreshold", 0.0);
-    smaablendShader.setFloat("predicationScale", 0.0);
-    smaablendShader.setFloat("predicationStrength", 0.0);*/
-
     smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
+    // TAA Shader
+    // ------------
     taaShader.use();
     taaShader.setInt("currentTex", 0);
     taaShader.setInt("previousTex", 1);
@@ -543,7 +533,6 @@ int main()
                     msaa = false;
                     fxaa = false;
                     smaa = false;
-                    taa = false;
                 }
 
                 ImGui::EndTable();
@@ -698,7 +687,7 @@ int main()
         }
 
         if (msaa) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
@@ -720,8 +709,8 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            //glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
         }
         if (fxaa) {
@@ -732,7 +721,7 @@ int main()
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
@@ -834,7 +823,7 @@ int main()
 
         }
         if (taa) {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
@@ -891,18 +880,6 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-
-    /*
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
-    {
-        fxaa = true;
-        printf("KEY PRESSED!\n");
-    }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-    {
-        fxaa = false;
-    }
-    */
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
