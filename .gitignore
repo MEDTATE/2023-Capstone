@@ -21,12 +21,9 @@
 mono_crash.*
 
 # Build results
-[Dd]ebug/
 [Dd]ebugPublic/
-[Rr]elease/GPU Project.exe
-[Rr]elease/GPU Project.pdb
 [Rr]eleases/
-x64/
+x64/**/*.exe
 x86/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
@@ -36,6 +33,8 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+!assimp-vc143-mt.dll
+!assimp-vc143-mtd.dll
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -81,6 +80,7 @@ StyleCopReport.xml
 *.meta
 *.obj
 !sponza.obj
+!container.obj
 *.iobj
 *.pch
 *.pdb
