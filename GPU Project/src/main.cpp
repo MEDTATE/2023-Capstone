@@ -410,6 +410,15 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
+    // load txt for benchmark result
+    ofstream outputFile("result.txt");
+    if (!outputFile)
+    {
+        std::cerr << "Failed to open text files(frame)" << std::endl;
+        return 1;
+    }
+
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -419,7 +428,7 @@ int main()
         crntTime = glfwGetTime();
         timeDiff = crntTime - prevTime;
         counter++;
-        if (timeDiff >= 1.0 / 30.0)
+        if (timeDiff >= 1.0 / 5.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
             double ms = (timeDiff / counter) * 1000; 
@@ -428,6 +437,8 @@ int main()
             fpsStream << std::fixed << std::setprecision(1) << FPS;
             msStream << std::fixed << std::setprecision(1) << ms;
             frameDisplay = fpsStream.str() + "FPS/ " + msStream.str() + "ms";
+
+            outputFile << frameDisplay + "\n";
 
             prevTime = crntTime;
             counter = 0;
@@ -452,7 +463,7 @@ int main()
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
-            
+
             ImGui::SeparatorText("Frame Counter");
 
             ImGui::TextColored(ImVec4(1, 1, 0, 1), frameDisplay.c_str());
@@ -462,16 +473,16 @@ int main()
                 switch (currentAA) {
                     // remember which option was activated last time
                 case 1:
-                    msaa = true;
+                    msaa = true;                  
                     break;
                 case 2:
-                    fxaa = true;
+                    fxaa = true;                   
                     break;
                 case 3:
-                    smaa = true;
+                    smaa = true;                   
                     break;
                 case 4:
-                    taa = true;
+                    taa = true;                   
                     break;
                 }
             }
@@ -483,21 +494,25 @@ int main()
                 if (ImGui::Checkbox("MSAA", &msaa)) {
                     fxaa = smaa = taa = false;
                     currentAA = 1;
+                    outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
                     smaa = taa = msaa = false;
                     currentAA = 2;
+                    outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
                     fxaa = taa = msaa = false;
                     currentAA = 3;
+                    outputFile << "AA Method : SMAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("TAA", &taa)) {
                     fxaa = smaa = msaa = false;
                     currentAA = 4;
+                    outputFile << "AA Method : TAA " << std::endl;
                 }
 
                 // Bind to 'AA on' button
@@ -514,43 +529,61 @@ int main()
             // MSAA Quality
             const char* msaaQualities[] = { "2X", "4X", "8X", "16X" };
             static int currentMSAAQuality = 1;
+            static int previousMSAAQuailty = 3;
             ImGui::SeparatorText("MSAA Quality");
             ImGui::Combo("##MSAA Quality", &currentMSAAQuality, msaaQualities, IM_ARRAYSIZE(msaaQualities));
 
-            switch (currentMSAAQuality) {
-            case 0:
-                msaaQuality = 2;
-                break;
-            case 1:
-                msaaQuality = 4;
-                break;
-            case 2:
-                msaaQuality = 8;
-                break;
-            case 3:
-                msaaQuality = 16;
-                break;
+            if (currentMSAAQuality != previousMSAAQuailty)
+            {
+                switch (currentMSAAQuality) {
+                case 0:
+                    msaaQuality = 2;
+                    outputFile << "MSAA 2X " << std::endl;
+                    break;
+                case 1:
+                    msaaQuality = 4;
+                    outputFile << "MSAA 4X " << std::endl;
+                    break;
+                case 2:
+                    msaaQuality = 8;
+                    outputFile << "MSAA 8X " << std::endl;
+                    break;
+                case 3:
+                    msaaQuality = 16;
+                    outputFile << "MSAA 16X " << std::endl;
+                    break;
+                }
+                previousMSAAQuailty = currentMSAAQuality;
             }
 
             // SMAA Quality
             const char* smaaQualities[] = { "LOW", "MEDIUM", "HIGH", "ULTRA" };
             static int currentSMAAQuality = 1;
+            static int previousSMAAQuality = 3;
             ImGui::SeparatorText("SMAA Quality");
             ImGui::Combo("##SMAA Quality", &currentSMAAQuality, smaaQualities, IM_ARRAYSIZE(smaaQualities));
 
-            switch (currentSMAAQuality) {
-            case 0:
-                smaaQuality = 0;
-                break;
-            case 1:
-                smaaQuality = 1;
-                break;
-            case 2:
-                smaaQuality = 2;
-                break;
-            case 3:
-                smaaQuality = 3;
-                break;
+            if (currentSMAAQuality != previousSMAAQuality)
+            {
+                switch (currentSMAAQuality) {
+                case 0:
+                    smaaQuality = 0;
+                    outputFile << "SMAA LOW " << std::endl;
+                    break;
+                case 1:
+                    smaaQuality = 1;
+                    outputFile << "SMAA MEDIUM " << std::endl;
+                    break;
+                case 2:
+                    smaaQuality = 2;
+                    outputFile << "SMAA HIGH " << std::endl;
+                    break;
+                case 3:
+                    smaaQuality = 3;
+                    outputFile << "SMAA ULTRA " << std::endl;
+                    break;
+                }
+                previousSMAAQuality = currentSMAAQuality;
             }
 
             // Change the actual number of samples
@@ -574,28 +607,43 @@ int main()
                 changeViewpoint(3);
 
             // Change Scene
-            const char* scenes[] = { "Container", "Sponza", "Image"};
+            const char* scenes[] = { "Container", "Sponza", "Image" };
             static int currentScene = 0;
+            static int previousScene = 3;
             ImGui::SeparatorText("Scene");
             ImGui::Combo("Scene", &currentScene, scenes, IM_ARRAYSIZE(scenes));
 
-            switch (currentScene) {
-            case 0:
-                isImage = false;
-                currentModel = container;
-                break;
-            case 1:
-                isImage = false;
-                currentModel = sponza;
-                break;
-            case 2:
-                isImage = true;
-                camera.Position = glm::vec3(-0.122459f, 0.039916f, 5.372975f);
-                camera.Yaw = -89.200050f;
-                camera.Pitch = -0.900008;
-                camera.ProcessMouseMovement(0, 0);
-                break;
+            if (currentScene != previousScene) {
+                switch (currentScene) {
+                case 0:
+                    isImage = false;
+                    changeViewpoint(1);
+                    currentModel = container;
+                    outputFile << "Current Scene : Container " << std::endl;
+                    break;
+                case 1:
+                    isImage = false;
+                    changeViewpoint(1);
+                    currentModel = sponza;
+                    outputFile << "Current Scene : Sponza " << std::endl;
+                    break;
+                case 2:
+                    isImage = true;
+                    camera.Position = glm::vec3(-0.122459f, 0.039916f, 5.372975f);
+                    camera.Yaw = -89.200050f;
+                    camera.Pitch = -0.900008;
+                    camera.ProcessMouseMovement(0, 0);
+                    outputFile << "Current Scene : Image " << std::endl;
+                    break;
+                }
+                previousScene = currentScene;
             }
+
+            ImGui::NewLine();
+            if (ImGui::Button("Benchmark (5s)"))
+                outputFile << "Processing Benchmark of each scene for 5s..." << std::endl;
+                //Benchmark();
+
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -603,6 +651,7 @@ int main()
 
             ImGui::End();
         }
+
 
         if (antiAliasing) {
             if (msaa) {
@@ -784,6 +833,9 @@ int main()
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    outputFile.close();
+
     return 0;
 }
 
