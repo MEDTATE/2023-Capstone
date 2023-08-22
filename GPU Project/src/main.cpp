@@ -21,18 +21,19 @@
 #include <AreaTex.h>
 #include <SearchTex.h>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
-void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window);
+void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+void CursorPosCallback(GLFWwindow *window, double xpos, double ypos);
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void changeViewpoint(int view);
 
 // settings
-const float SCR_WIDTH = 1600;
-const float SCR_HEIGHT = 900;
+const float SCR_WIDTH = 1600.0;
+const float SCR_HEIGHT = 900.0;
+const float SCR_SCALE = SCR_HEIGHT / SCR_WIDTH;
 
 // camera
 Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.0f, -0.5f);
@@ -67,11 +68,10 @@ GLuint colorTex;
 GLuint multiSamplingTex;
 GLuint edgeTex;
 GLuint blendTex;
+GLuint imageTex;
+
 GLuint areaTex;
 GLuint searchTex;
-
-GLuint currentTex;
-GLuint previousTex;
 
 GLuint imageTex;
 
@@ -91,27 +91,31 @@ GLuint quadVAO, quadVBO;
 GLuint msaaQuality = 4;
 GLuint smaaQuality = 1;
 
-struct SMAAParameters {
+struct SMAAParameters
+{
     float threshold;
     float depthThreshold;
     GLuint maxSearchSteps;
     GLuint maxSearchStepsDiag;
 
     GLuint cornerRounding;
-    //GLuint  pad0;
-    //GLuint  pad1;
-    //GLuint  pad2;
+    // GLuint  pad0;
+    // GLuint  pad1;
+    // GLuint  pad2;
 };
 
 static const SMAAParameters smaaPresets[4] =
-{
-    { 0.15f, 0.1f * 0.15f,  1u,  8u, 25u }  // low
-  , { 0.10f, 0.1f * 0.10f,  1u,  8u, 25u }  // medium
-  , { 0.10f, 0.1f * 0.10f, 16u,  8u, 25u }  // high
-  , { 0.05f, 0.1f * 0.05f, 32u, 16u, 25u }  // ultra
+    {
+        {0.15f, 0.1f * 0.15f, 1u, 8u, 25u} // low
+        ,
+        {0.10f, 0.1f * 0.10f, 1u, 8u, 25u} // medium
+        ,
+        {0.10f, 0.1f * 0.10f, 16u, 8u, 25u} // high
+        ,
+        {0.05f, 0.1f * 0.05f, 32u, 16u, 25u} // ultra
 };
 
-static void glfw_error_callback(int error, const char* description)
+static void glfw_error_callback(int error, const char *description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
@@ -123,7 +127,7 @@ int main()
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
-    const char* glsl_version = "#version 450";
+    const char *glsl_version = "#version 450";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -134,7 +138,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Anti Aliasing Project", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Anti Aliasing Project", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -143,7 +147,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    //glfwSetMouseButtonCallback(window, mouse_callback);
+    // glfwSetMouseButtonCallback(window, mouse_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetKeyCallback(window, key_callback);
@@ -154,14 +158,15 @@ int main()
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     io.ConfigWindowsResizeFromEdges = false;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
+    // ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -176,13 +181,13 @@ int main()
     // - Read 'docs/FONTS.md' for more instructions and details.
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
     // - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
+    // io.Fonts->AddFontDefault();
+    // io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
+    // io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+    // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+    // io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+    // ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+    // IM_ASSERT(font != NULL);
 
     // Our state
     bool show_demo_window = true;
@@ -252,7 +257,7 @@ int main()
     // load Image
     // -----------
     int width, height, numChannels;
-    unsigned char* imageData = stbi_load("resources/Images/SyntheticTests.png", &width, &height, &numChannels, 0);
+    unsigned char *imageData = stbi_load("resources/Images/SyntheticTests.png", &width, &height, &numChannels, 0);
 
     if (!imageData)
     {
@@ -269,11 +274,12 @@ int main()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, imageData);
 
     // flip SMAA textures
-    unsigned char* buffer1 = new unsigned char[AREATEX_SIZE];
-    //std::vector<unsigned char> tempBuffer1(AREATEX_SIZE);
-    for (unsigned int y = 0; y < AREATEX_HEIGHT; y++) {
+    unsigned char *buffer1 = new unsigned char[AREATEX_SIZE];
+    // std::vector<unsigned char> tempBuffer1(AREATEX_SIZE);
+    for (unsigned int y = 0; y < AREATEX_HEIGHT; y++)
+    {
         unsigned int srcY = AREATEX_HEIGHT - 1 - y;
-        //unsigned int srcY = y;
+        // unsigned int srcY = y;
         memcpy(&buffer1[y * AREATEX_PITCH], areaTexBytes + srcY * AREATEX_PITCH, AREATEX_PITCH);
     }
 
@@ -283,15 +289,16 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, (GLsizei)AREATEX_WIDTH, (GLsizei)AREATEX_HEIGHT, 0, GL_RG, GL_UNSIGNED_BYTE, buffer1);// areaTexBytes);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, (GLsizei)AREATEX_WIDTH, (GLsizei)AREATEX_HEIGHT, 0, GL_RG, GL_UNSIGNED_BYTE, buffer1); // areaTexBytes);
 
     delete[] buffer1;
     buffer1 = new unsigned char[SEARCHTEX_SIZE];
 
-    //std::vector<unsigned char> tempBuffer2(SEARCHTEX_SIZE);
-    for (unsigned int y = 0; y < SEARCHTEX_HEIGHT; y++) {
+    // std::vector<unsigned char> tempBuffer2(SEARCHTEX_SIZE);
+    for (unsigned int y = 0; y < SEARCHTEX_HEIGHT; y++)
+    {
         unsigned int srcY = SEARCHTEX_HEIGHT - 1 - y;
-        //unsigned int srcY = y;
+        // unsigned int srcY = y;
         memcpy(&buffer1[y * SEARCHTEX_PITCH], searchTexBytes + srcY * SEARCHTEX_PITCH, SEARCHTEX_PITCH);
     }
     glGenTextures(1, &searchTex);
@@ -300,7 +307,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, (GLsizei)SEARCHTEX_WIDTH, (GLsizei)SEARCHTEX_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, buffer1);// searchTexBytes);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, (GLsizei)SEARCHTEX_WIDTH, (GLsizei)SEARCHTEX_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, buffer1); // searchTexBytes);
 
     delete[] buffer1;
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -357,9 +364,7 @@ int main()
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
     Shader smaaWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaaBlendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
-
-    Shader taaShader("shader/temporal.vs", "shader/temporal.fs");
-
+    
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
@@ -371,7 +376,7 @@ int main()
     modelShader.setInt("texture_diffuse1", 0);
 
     imageShader.use();
-    imageShader.setInt("texture_diffuse1", 0); // ÅØ½ºÃ³ À¯´Ö ÀÎµ¦½º ¼³Á¤
+    imageShader.setInt("texture_diffuse1", 0); // ï¿½Ø½ï¿½Ã³ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
     screenShader.use();
     screenShader.setInt("screenTexture", 0);
@@ -380,20 +385,20 @@ int main()
     // -----------
     fxaaShader.use();
     fxaaShader.setInt("colorTex", 0);
-    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Edge Shader
     // -----------
     smaaEdgeShader.use();
-    //smaaEdgeShader.setInt("depthTex", 0);
+    // smaaEdgeShader.setInt("depthTex", 0);
     smaaEdgeShader.setInt("colorTex", 0);
-    //smaaEdgeShader.setInt("predicationTex", 0);
+    // smaaEdgeShader.setInt("predicationTex", 0);
 
     smaaEdgeShader.setFloat("predicationThreshold", 0.01);
     smaaEdgeShader.setFloat("predicationScale", 2.0);
     smaaEdgeShader.setFloat("predicationStrength", 0.4);
 
-    smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Weight Shader
     // -------------
@@ -408,7 +413,7 @@ int main()
     smaaWeightShader.setFloat("predicationScale", 2.0);
     smaaWeightShader.setFloat("predicationStrength", 0.4);
 
-    smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Blend Shader
     // ------------
@@ -422,24 +427,15 @@ int main()
 
     smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-    // TAA Shader
-    // ------------
-    taaShader.use();
-    taaShader.setInt("currentTex", 0);
-    taaShader.setInt("previousTex", 1);
-    taaShader.setInt("velocityTex", 2);
-
-    taaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
-
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-        // positions   // texCoords
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
 
-        -1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f
+    -1.0f,  1.0f,  0.0f, 1.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f, 1.0f
     };
 
     // screen quad VAO
@@ -449,9 +445,17 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)(2 * sizeof(float)));
+
+    // load txt for benchmark result
+    ofstream outputFile("result.txt");
+    if (!outputFile)
+    {
+        std::cerr << "Failed to open text files(frame)" << std::endl;
+        return 1;
+    }
 
     // render loop
     // -----------
@@ -462,7 +466,7 @@ int main()
         crntTime = glfwGetTime();
         timeDiff = crntTime - prevTime;
         counter++;
-        if (timeDiff >= 1.0 / 30.0)
+        if (timeDiff >= 1.0 / 5.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
             double ms = (timeDiff / counter) * 1000;
@@ -471,6 +475,8 @@ int main()
             fpsStream << std::fixed << std::setprecision(1) << FPS;
             msStream << std::fixed << std::setprecision(1) << ms;
             frameDisplay = fpsStream.str() + "FPS/ " + msStream.str() + "ms";
+
+            outputFile << frameDisplay + "\n";
 
             prevTime = crntTime;
             counter = 0;
@@ -493,16 +499,18 @@ int main()
         // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(200, 450), 0);
+            ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
-
+            
             ImGui::SeparatorText("Frame Counter");
 
             ImGui::TextColored(ImVec4(1, 1, 0, 1), frameDisplay.c_str());
 
             ImGui::SeparatorText("Anti Aliasing");
-            if (ImGui::Checkbox("AA On", &antiAliasing)) {
-                switch (currentAA) {
+            if (ImGui::Checkbox("AA On", &antiAliasing))
+            {
+                switch (currentAA)
+                {
                     // remember which option was activated last time
                 case 1:
                     msaa = true;
@@ -519,28 +527,38 @@ int main()
                 }
             }
 
-            if (ImGui::BeginTable("split", 2)) {
+            if (ImGui::BeginTable("split", 2))
+            {
                 ImGui::TableNextColumn();
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("MSAA", &msaa)) {
-                    fxaa = smaa = false;
+                    fxaa = smaa = taa = false;
                     currentAA = 1;
+                    outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
-                    smaa = msaa = false;
+                    smaa = taa = msaa = false;
                     currentAA = 2;
+                    outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
-                    fxaa = msaa = false;
+                    fxaa = taa = msaa = false;
                     currentAA = 3;
+                    outputFile << "AA Method : SMAA " << std::endl;
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("TAA", &taa)) {
+                    fxaa = smaa = msaa = false;
+                    currentAA = 4;
                 }
 
                 // Bind to 'AA on' button
-                if (antiAliasing == false) {
+                if (antiAliasing == false)
+                {
                     msaa = false;
                     fxaa = false;
                     smaa = false;
@@ -565,55 +583,78 @@ int main()
             }
 
             // MSAA Quality
-            const char* msaaQualities[] = { "2X", "4X", "8X", "16X" };
+            const char *msaaQualities[] = {"1X", "2X", "4X", "8X", "16X"};
             static int currentMSAAQuality = 1;
+            static int previousMSAAQuailty = 3;
             ImGui::SeparatorText("MSAA Quality");
             ImGui::Combo("##MSAA Quality", &currentMSAAQuality, msaaQualities, IM_ARRAYSIZE(msaaQualities));
 
-            switch (currentMSAAQuality) {
-            case 0:
-                msaaQuality = 2;
-                break;
-            case 1:
-                msaaQuality = 4;
-                break;
-            case 2:
-                msaaQuality = 8;
-                break;
-            case 3:
-                msaaQuality = 16;
-                break;
+            if (currentMSAAQuality != previousMSAAQuailty)
+            {
+                switch (currentMSAAQuality)
+                {
+                case 0:
+                    msaaQuality = 2;
+                    outputFile << "MSAA 2X " << std::endl;
+                    break;
+                case 1:
+                    msaaQuality = 4;
+                    outputFile << "MSAA 4X " << std::endl;
+                    break;
+                case 2:
+                    msaaQuality = 8;
+                    outputFile << "MSAA 8X " << std::endl;
+                    break;
+                case 3:
+                    msaaQuality = 16;
+                    outputFile << "MSAA 16X " << std::endl;
+                    break;
+                }
+                previousMSAAQuailty = currentMSAAQuality;
             }
 
             // SMAA Quality
-            const char* smaaQualities[] = { "LOW", "MEDIUM", "HIGH", "ULTRA" };
+            const char *smaaQualities[] = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
             static int currentSMAAQuality = 1;
+            static int previousSMAAQuality = 3;
             ImGui::SeparatorText("SMAA Quality");
             ImGui::Combo("##SMAA Quality", &currentSMAAQuality, smaaQualities, IM_ARRAYSIZE(smaaQualities));
 
-            switch (currentSMAAQuality) {
-            case 0:
-                smaaQuality = 0;
-                break;
-            case 1:
-                smaaQuality = 1;
-                break;
-            case 2:
-                smaaQuality = 2;
-                break;
-            case 3:
-                smaaQuality = 3;
-                break;
+            if (currentSMAAQuality != previousSMAAQuality)
+            {
+                switch (currentSMAAQuality)
+                {
+                case 0:
+                    smaaQuality = 0;
+                    outputFile << "SMAA LOW " << std::endl;
+                    break;
+                case 1:
+                    smaaQuality = 1;
+                    outputFile << "SMAA MEDIUM " << std::endl;
+                    break;
+                case 2:
+                    smaaQuality = 2;
+                    outputFile << "SMAA HIGH " << std::endl;
+                    break;
+                case 3:
+                    smaaQuality = 3;
+                    outputFile << "SMAA ULTRA " << std::endl;
+                    break;
+                }
+                previousSMAAQuality = currentSMAAQuality;
             }
 
             // Change the actual number of samples
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaQuality, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+            if (msaa)
+            {
+                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
+                glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaQuality, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-            glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaQuality, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaQuality, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            }
 
             // Change Viewpoint
             ImGui::SeparatorText("Viewpoint");
@@ -627,28 +668,44 @@ int main()
                 changeViewpoint(3);
 
             // Change Scene
-            const char* scenes[] = { "Container", "Sponza", "Image" };
+            const char* scenes[] = { "Container", "Sponza", "Image"};
             static int currentScene = 0;
+            static int previousScene = 3;
             ImGui::SeparatorText("Scene");
             ImGui::Combo("Scene", &currentScene, scenes, IM_ARRAYSIZE(scenes));
 
-            switch (currentScene) {
-            case 0:
-                isImage = false;
-                currentModel = container;
-                break;
-            case 1:
-                isImage = false;
-                currentModel = sponza;
-                break;
-            case 2:
-                isImage = true;
-                camera.Position = glm::vec3(-0.122459f, 0.039916f, 5.372975f);
-                camera.Yaw = -89.200050f;
-                camera.Pitch = -0.900008;
-                camera.ProcessMouseMovement(0, 0);
-                break;
+            if (currentScene != previousScene)
+            {
+                switch (currentScene)
+                {
+                case 0:
+                    isImage = false;
+                    changeViewpoint(1);
+                    currentModel = container;
+                    outputFile << "Current Scene : Container " << std::endl;
+                    break;
+                case 1:
+                    isImage = false;
+                    changeViewpoint(1);
+                    currentModel = sponza;
+                    outputFile << "Current Scene : Sponza " << std::endl;
+                    break;
+                case 2:
+                    isImage = true;
+                    camera.Position = glm::vec3(-0.122459f, 0.039916f, 5.372975f);
+                    camera.Yaw = -89.200050f;
+                    camera.Pitch = -0.900008;
+                    camera.ProcessMouseMovement(0, 0);
+                    outputFile << "Current Scene : Image " << std::endl;
+                    break;
+                }
+                previousScene = currentScene;
             }
+
+            ImGui::NewLine();
+            if (ImGui::Button("Benchmark (5s)"))
+                outputFile << "Processing Benchmark of each scene for 5s..." << std::endl;
+            // Benchmark();
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -657,15 +714,19 @@ int main()
             ImGui::End();
         }
 
-        if (antiAliasing) {
-            if (msaa) {
+        if (antiAliasing)
+        {
+            if (msaa)
+            {
                 glBindFramebuffer(GL_FRAMEBUFFER, multisampledFBO);
             }
-            else {
+            else
+            {
                 glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
             }
         }
-        else {
+        else
+        {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
@@ -678,17 +739,19 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         glm::mat4 view = camera.GetViewMatrix();
 
-        if (!isImage) {
+        if (!isImage)
+        {
             modelShader.use();
             modelShader.setMat4("projection", projection);
             modelShader.setMat4("view", view);
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-            model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
+            model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));  // it's a bit too big for our scene, so scale it down
             modelShader.setMat4("model", model);
             currentModel.Draw(modelShader);
         }
-        else {
+        else
+        {
             imageShader.use();
             imageShader.setMat4("projection", projection);
             imageShader.setMat4("view", view);
@@ -697,31 +760,24 @@ int main()
             // render the loaded model
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-            model = glm::scale(model, glm::vec3(2.15f, 2.15f, 1.0f));	// scale 
+            model = glm::scale(model, glm::vec3(2.15f, 2.15f, 1.0f));   // scale
 
             // projection matrix (needed for final 2D views)
-            //glm::mat4 projection = glm::ortho(0, width, height, 0, 0, 1000);
+            // glm::mat4 projection = glm::ortho(0, width, height, 0, 0, 1000);
 
-            modelShader.setMat4("projection", projection);
+            // modelShader.setMat4("projection", projection);
             imageShader.setMat4("model", model);
 
-            // ÀÌ¹ÌÁö¸¦ ¹ÙÀÎµùÇÑ ÅØ½ºÃ³ À¯´ÖÀ» È°¼ºÈ­
+            // ï¿½Ì¹ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½Ø½ï¿½Ã³ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È°ï¿½ï¿½È­
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, imageTex);
 
-            // ÄõµåVAO ¹ÙÀÎµù ¹× ±×¸®±â
+            // ï¿½ï¿½ï¿½ï¿½VAO ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
         if (msaa) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -747,13 +803,6 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (fxaa) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -776,13 +825,6 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (smaa) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
             /* EDGE DETECTION PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
             glDisable(GL_DEPTH_TEST);
@@ -800,9 +842,8 @@ int main()
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, colorTex);	// use the color attachment texture as the texture of the quad plane
+            glBindTexture(GL_TEXTURE_2D, colorTex); // use the color attachment texture as the texture of the quad plane
             glDrawArrays(GL_TRIANGLES, 0, 6);
-
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -853,31 +894,6 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        }
-        if (taa) {
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-            // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            taaShader.use();
-            glBindVertexArray(quadVAO);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, currentTex);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, previousTex);
-
-            glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
 
@@ -903,12 +919,15 @@ int main()
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    outputFile.close();
+
     return 0;
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -925,9 +944,9 @@ void processInput(GLFWwindow* window)
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
+    // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
 
     glViewport(0, 0, width, height);
@@ -935,7 +954,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // glfw: whenever the mouse moves, this callback is called
 // -------------------------------------------------------
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
@@ -953,34 +972,32 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         firstMouse = false;
     }
 
-
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
 
-
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     std::cout << "Button Clicked!: " << button << std::endl;
 }
-void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
+void CursorPosCallback(GLFWwindow *window, double xpos, double ypos)
 {
     std::cout << "Cursor moved! x: " << xpos << " y: " << ypos << std::endl;
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
     {
