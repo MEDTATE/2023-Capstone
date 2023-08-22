@@ -31,8 +31,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void changeViewpoint(int view);
 
 // settings
-const float SCR_WIDTH = 1600;
-const float SCR_HEIGHT = 900;
+const float SCR_WIDTH = 1600.0;
+const float SCR_HEIGHT = 900.0;
+const float SCR_SCALE = SCR_HEIGHT / SCR_WIDTH;
 
 // camera
 Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.0f, -0.5f);
@@ -66,11 +67,11 @@ static bool isImage;
 GLuint colorTex;
 GLuint multiSamplingTex;
 GLuint edgeTex;
-GLuint blendTex;
+GLuint blendTex;    
+GLuint imageTex;
+
 GLuint areaTex;
 GLuint searchTex;
-
-GLuint imageTex;
 
 GLuint colorFBO;
 GLuint multisampledFBO;
@@ -348,7 +349,7 @@ int main()
     // -----------
     fxaaShader.use();
     fxaaShader.setInt("colorTex", 0);
-    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Edge Shader
     // -----------
@@ -361,7 +362,7 @@ int main()
     smaaEdgeShader.setFloat("predicationScale", 0.0);
     smaaEdgeShader.setFloat("predicationStrength", 0.0);*/
 
-    smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Weight Shader
     // -------------
@@ -374,7 +375,7 @@ int main()
     smaaweightShader.setFloat("predicationScale", 0.0);
     smaaweightShader.setFloat("predicationStrength", 0.0);*/
 
-    smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Blend Shader
     // ------------
@@ -386,7 +387,7 @@ int main()
     smaablendShader.setFloat("predicationScale", 0.0);
     smaablendShader.setFloat("predicationStrength", 0.0);*/
 
-    smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
     // positions   // texCoords
@@ -419,7 +420,7 @@ int main()
         crntTime = glfwGetTime();
         timeDiff = crntTime - prevTime;
         counter++;
-        if (timeDiff >= 1.0 / 30.0)
+        if (timeDiff >= 1.0 / 5.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
             double ms = (timeDiff / counter) * 1000; 
@@ -451,7 +452,7 @@ int main()
         {
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
-            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove); 
             
             ImGui::SeparatorText("Frame Counter");
 
@@ -512,22 +513,25 @@ int main()
             }
 
             // MSAA Quality
-            const char* msaaQualities[] = { "2X", "4X", "8X", "16X" };
+            const char* msaaQualities[] = { "1X", "2X", "4X", "8X", "16X" };
             static int currentMSAAQuality = 1;
             ImGui::SeparatorText("MSAA Quality");
             ImGui::Combo("##MSAA Quality", &currentMSAAQuality, msaaQualities, IM_ARRAYSIZE(msaaQualities));
 
             switch (currentMSAAQuality) {
             case 0:
-                msaaQuality = 2;
+                msaaQuality = 1;
                 break;
             case 1:
-                msaaQuality = 4;
+                msaaQuality = 2;
                 break;
             case 2:
-                msaaQuality = 8;
+                msaaQuality = 4;
                 break;
             case 3:
+                msaaQuality = 8;
+                break;
+            case 4:
                 msaaQuality = 16;
                 break;
             }
@@ -554,13 +558,15 @@ int main()
             }
 
             // Change the actual number of samples
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaQuality, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+            if (msaa) {
+                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
+                glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaQuality, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 
-            glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaQuality, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaQuality, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            }
 
             // Change Viewpoint
             ImGui::SeparatorText("Viewpoint");
@@ -583,6 +589,7 @@ int main()
             case 0:
                 isImage = false;
                 currentModel = container;
+                changeViewpoint(1);
                 break;
             case 1:
                 isImage = false;
@@ -624,11 +631,11 @@ int main()
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        modelShader.setMat4("projection", projection);
-        modelShader.setMat4("view", view);
 
         if (!isImage) {
             modelShader.use();
+            modelShader.setMat4("projection", projection);
+            modelShader.setMat4("view", view);
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
             model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
@@ -637,6 +644,8 @@ int main()
         }
         else {
             imageShader.use();
+            imageShader.setMat4("projection", projection);
+            imageShader.setMat4("view", view);
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             // render the loaded model
@@ -647,7 +656,7 @@ int main()
             // projection matrix (needed for final 2D views)
             //glm::mat4 projection = glm::ortho(0, width, height, 0, 0, 1000);
 
-            modelShader.setMat4("projection", projection);
+            //modelShader.setMat4("projection", projection);
             imageShader.setMat4("model", model);
 
             // 이미지를 바인딩한 텍스처 유닛을 활성화
