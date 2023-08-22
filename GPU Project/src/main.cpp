@@ -479,7 +479,7 @@ int main()
         // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
+            ImGui::SetNextWindowSize(ImVec2(200, 400), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Frame Counter");
@@ -518,14 +518,11 @@ int main()
                     smaa = msaa = false;
                     currentAA = 2;
                 }
+                ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
                     fxaa = msaa = false;
                     currentAA = 3;
-                }
-                ImGui::TableNextColumn();
-                if (ImGui::Checkbox("TAA", &taa)) {
-                    currentAA = 4;
                 }
 
                 // Bind to 'AA on' button
@@ -533,6 +530,21 @@ int main()
                     msaa = false;
                     fxaa = false;
                     smaa = false;
+                }
+
+                ImGui::EndTable();
+            }
+            ImGui::SeparatorText("Temporal AA");
+            if (ImGui::BeginTable("split", 1)) {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("TAA", &taa)) {
+                    currentAA = 1;
+                }
+
+                // Bind to 'AA on' button
+                if (antiAliasing == false) {
+                    taa = false;
                 }
 
                 ImGui::EndTable();
@@ -651,11 +663,11 @@ int main()
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 10000.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        modelShader.setMat4("projection", projection);
-        modelShader.setMat4("view", view);
 
         if (!isImage) {
             modelShader.use();
+            modelShader.setMat4("projection", projection);
+            modelShader.setMat4("view", view);
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
             model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));	// it's a bit too big for our scene, so scale it down
@@ -709,9 +721,10 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
-            //glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (fxaa) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
@@ -721,7 +734,7 @@ int main()
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
@@ -823,7 +836,7 @@ int main()
 
         }
         if (taa) {
-            glBindFramebuffer(GL_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
