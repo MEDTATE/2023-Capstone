@@ -27,8 +27,9 @@ uniform vec4 screenSize;
 
 #define SMAA_RT_METRICS screenSize
 
+uniform uint smaaMaxSearchSteps;
+
 #define SMAA_MAX_SEARCH_STEPS 16
-//4, 8, 16, 32
 
 #define mad(a, b, c) fma(a, b, c)
 #define API_V_DIR(v) -(v)

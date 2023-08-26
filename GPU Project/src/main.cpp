@@ -31,9 +31,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 void changeViewpoint(int view);
 
 // settings
-const float SCR_WIDTH = 1600.0;
-const float SCR_HEIGHT = 900.0;
-const float SCR_SCALE = SCR_HEIGHT / SCR_WIDTH;
+float SCR_WIDTH = 1600.0;
+float SCR_HEIGHT = 900.0;
+float SCR_SCALE = SCR_HEIGHT / SCR_WIDTH;
 
 // camera
 Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.0f, -0.5f);
@@ -83,8 +83,15 @@ GLuint multiSampledRBO;
 
 GLuint quadVAO, quadVBO;
 
-GLuint msaaQuality = 4;
-GLuint smaaQuality = 1;
+// highest as default
+GLuint msaaQualityLevel = 4;
+GLuint smaaPreset = 3;
+
+static int currentMSAAQuality = 4;
+static int previousMSAAQuailty = 0;
+
+static int currentSMAAQuality = 3;
+static int previousSMAAQuality = 0;
 
 struct SMAAParameters
 {
@@ -100,7 +107,7 @@ struct SMAAParameters
 };
 
 static const SMAAParameters smaaPresets[4] =
-    {
+{
         {0.15f, 0.1f * 0.15f, 1u, 8u, 25u} // low
         ,
         {0.10f, 0.1f * 0.10f, 1u, 8u, 25u} // medium
@@ -109,6 +116,9 @@ static const SMAAParameters smaaPresets[4] =
         ,
         {0.05f, 0.1f * 0.05f, 32u, 16u, 25u} // ultra
 };
+
+static const int msaaSamples[5] = { 1, 2, 4, 8, 16 };
+
 
 static void glfw_error_callback(int error, const char *description)
 {
@@ -215,7 +225,7 @@ int main()
 
     glGenTextures(1, &multiSamplingTex);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
-    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaQuality, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples[msaaQualityLevel], GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
 
     glGenTextures(1, &edgeTex);
     glBindTexture(GL_TEXTURE_2D, edgeTex);
@@ -310,7 +320,7 @@ int main()
 
     glGenRenderbuffers(1, &multiSampledRBO);
     glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaQuality, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples[msaaQualityLevel], GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, multiSampledRBO);
 
@@ -365,6 +375,12 @@ int main()
     smaaEdgeShader.setInt("colorTex", 0);
     // smaaEdgeShader.setInt("predicationTex", 0);
 
+    smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+    smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+    smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+    smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+    smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+
     /*smaaEdgeShader.setFloat("predicationThreshold", 0.0);
     smaaEdgeShader.setFloat("predicationScale", 0.0);
     smaaEdgeShader.setFloat("predicationStrength", 0.0);*/
@@ -378,6 +394,12 @@ int main()
     smaaWeightShader.setInt("areaTex", 1);
     smaaWeightShader.setInt("searchTex", 2);
 
+    smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+    smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+    smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+    smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+    smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+
     /*smaaweightShader.setFloat("predicationThreshold", 0.0);
     smaaweightShader.setFloat("predicationScale", 0.0);
     smaaweightShader.setFloat("predicationStrength", 0.0);*/
@@ -389,6 +411,12 @@ int main()
     smaaBlendShader.use();
     smaaBlendShader.setInt("colorTex", 0);
     smaaBlendShader.setInt("blendTex", 1);
+
+    smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+    smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+    smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+    smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+    smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
 
     /*smaablendShader.setFloat("predicationThreshold", 0.0);
     smaablendShader.setFloat("predicationScale", 0.0);
@@ -467,7 +495,7 @@ int main()
         // render GUI
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 400), 0);
+            ImGui::SetNextWindowSize(ImVec2(150, 450), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Frame Counter");
@@ -542,8 +570,7 @@ int main()
 
             // MSAA Quality
             const char *msaaQualities[] = {"1X", "2X", "4X", "8X", "16X"};
-            static int currentMSAAQuality = 1;
-            static int previousMSAAQuailty = 3;
+            
             ImGui::SeparatorText("MSAA Quality");
             ImGui::Combo("##MSAA Quality", &currentMSAAQuality, msaaQualities, IM_ARRAYSIZE(msaaQualities));
 
@@ -552,29 +579,44 @@ int main()
                 switch (currentMSAAQuality)
                 {
                 case 0:
-                    msaaQuality = 2;
-                    outputFile << "MSAA 2X " << std::endl;
+                    msaaQualityLevel = 0;
+                    outputFile << "MSAA 1X " << std::endl;
                     break;
                 case 1:
-                    msaaQuality = 4;
-                    outputFile << "MSAA 4X " << std::endl;
+                    msaaQualityLevel = 1;
+                    outputFile << "MSAA 2X " << std::endl;
                     break;
                 case 2:
-                    msaaQuality = 8;
-                    outputFile << "MSAA 8X " << std::endl;
+                    msaaQualityLevel = 2;
+                    outputFile << "MSAA 4X " << std::endl;
                     break;
                 case 3:
-                    msaaQuality = 16;
+                    msaaQualityLevel = 3;
+                    outputFile << "MSAA 8X " << std::endl;
+                    break;
+                case 4:
+                    msaaQualityLevel = 4;
                     outputFile << "MSAA 16X " << std::endl;
                     break;
                 }
                 previousMSAAQuailty = currentMSAAQuality;
             }
 
+            // Change the actual number of samples
+            if (msaa)
+            {
+                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
+                glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples[msaaQualityLevel], GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+
+                glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples[msaaQualityLevel], GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+                glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            }
+
             // SMAA Quality
             const char *smaaQualities[] = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
-            static int currentSMAAQuality = 1;
-            static int previousSMAAQuality = 3;
+
             ImGui::SeparatorText("SMAA Quality");
             ImGui::Combo("##SMAA Quality", &currentSMAAQuality, smaaQualities, IM_ARRAYSIZE(smaaQualities));
 
@@ -583,35 +625,23 @@ int main()
                 switch (currentSMAAQuality)
                 {
                 case 0:
-                    smaaQuality = 0;
+                    smaaPreset = 0;
                     outputFile << "SMAA LOW " << std::endl;
                     break;
                 case 1:
-                    smaaQuality = 1;
+                    smaaPreset = 1;
                     outputFile << "SMAA MEDIUM " << std::endl;
                     break;
                 case 2:
-                    smaaQuality = 2;
+                    smaaPreset = 2;
                     outputFile << "SMAA HIGH " << std::endl;
                     break;
                 case 3:
-                    smaaQuality = 3;
+                    smaaPreset = 3;
                     outputFile << "SMAA ULTRA " << std::endl;
                     break;
                 }
                 previousSMAAQuality = currentSMAAQuality;
-            }
-
-            // Change the actual number of samples
-            if (msaa)
-            {
-                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
-                glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaQuality, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
-                glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
-
-                glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
-                glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaQuality, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-                glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
 
             // Change Viewpoint
@@ -761,6 +791,7 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
 
             fxaaShader.use();
+            //fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, colorTex);
@@ -777,11 +808,12 @@ int main()
 
             smaaEdgeShader.use();
             // set SMAA quality
-            smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaQuality].threshold);
-            smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaQuality].depthThreshold);
-            smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaQuality].maxSearchSteps);
-            smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaQuality].maxSearchStepsDiag);
-            smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaQuality].cornerRounding);
+            smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            //smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -799,11 +831,12 @@ int main()
 
             smaaWeightShader.use();
             // set SMAA quality
-            smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaQuality].threshold);
-            smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaQuality].depthThreshold);
-            smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaQuality].maxSearchSteps);
-            smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaQuality].maxSearchStepsDiag);
-            smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaQuality].cornerRounding);
+            smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            //smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
 
@@ -822,11 +855,12 @@ int main()
             /* NEIGHBORHOOD BLENDING PASS */
             smaaBlendShader.use();
             // set SMAA quality
-            smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaQuality].threshold);
-            smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaQuality].depthThreshold);
-            smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaQuality].maxSearchSteps);
-            smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaQuality].maxSearchStepsDiag);
-            smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaQuality].cornerRounding);
+            smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            //smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
 
@@ -901,6 +935,26 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
+    
+    {
+        glBindTexture(GL_TEXTURE_2D, colorTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, multiSamplingTex);
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSamples[msaaQualityLevel], GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+        glBindTexture(GL_TEXTURE_2D, edgeTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D, blendTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples[msaaQualityLevel], GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+        glBindRenderbuffer(GL_RENDERBUFFER, colorRBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+
 
     glViewport(0, 0, width, height);
 }
