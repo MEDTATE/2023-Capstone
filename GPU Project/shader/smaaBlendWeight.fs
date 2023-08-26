@@ -27,10 +27,17 @@ uniform vec4 screenSize;
 
 uniform vec4 subsampleIndices;
 
+uniform float smaaThershold;
+uniform float smaaDepthThreshold;
+uniform uint smaaMaxSearchSteps;
+uniform uint smaaMaxSearchStepsDiag;
+uniform uint smaaCornerRounding;
 
 uniform float predicationThreshold;
 uniform float predicationScale;
 uniform float predicationStrength;
+
+
 
 #define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1

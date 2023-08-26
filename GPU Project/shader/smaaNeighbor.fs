@@ -25,6 +25,13 @@ THE SOFTWARE.
 
 uniform vec4 screenSize;
 
+uniform float smaaThershold;
+uniform float smaaDepthThreshold;
+uniform uint smaaMaxSearchSteps;
+uniform uint smaaMaxSearchStepsDiag;
+uniform uint smaaCornerRounding;
+
+
 #define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1
 

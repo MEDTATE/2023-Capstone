@@ -31,6 +31,12 @@ uniform float predicationThreshold;
 uniform float predicationScale;
 uniform float predicationStrength;
 
+uniform float smaaThershold;
+uniform float smaaDepthThreshold;
+uniform uint smaaMaxSearchSteps;
+uniform uint smaaMaxSearchStepsDiag;
+uniform uint smaaCornerRounding;
+
 #define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1
 
@@ -41,10 +47,10 @@ uniform float predicationStrength;
 #define EDGEMETHOD 0
 #endif
 
-
 #define SMAA_PREDICATION_THRESHOLD  predicationThreshold
 #define SMAA_PREDICATION_SCALE      predicationScale
 #define SMAA_PREDICATION_STRENGTH   predicationStrength
+
 
 
 #define LinearSampler linearSampler
