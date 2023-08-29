@@ -95,29 +95,29 @@ static int previousSMAAQuality = 0;
 
 struct SMAAParameters
 {
-    float threshold;
-    float depthThreshold;
-    GLuint maxSearchSteps;
-    GLuint maxSearchStepsDiag;
+    GLfloat threshold;
+    GLfloat depthThreshold;
+    GLint maxSearchSteps;
+    GLint maxSearchStepsDiag;
 
-    GLuint cornerRounding;
+    GLint cornerRounding;
     // GLuint  pad0;
     // GLuint  pad1;
     // GLuint  pad2;
 };
 
-static const SMAAParameters smaaPresets[4] =
+SMAAParameters smaaPresets[4] =
 {
-        {0.15f, 0.1f * 0.15f, 1u, 8u, 25u} // low
+        {0.15f, 0.1f * 0.15f, 1, 0, 0} // low
         ,
-        {0.10f, 0.1f * 0.10f, 1u, 8u, 25u} // medium
+        {0.10f, 0.1f * 0.10f, 1, 0, 0} // medium
         ,
-        {0.10f, 0.1f * 0.10f, 16u, 8u, 25u} // high
+        {0.10f, 0.1f * 0.10f, 16, 8, 25} // high
         ,
-        {0.05f, 0.1f * 0.05f, 32u, 16u, 25u} // ultra
+        {0.05f, 0.1f * 0.05f, 32, 16, 25} // ultra
 };
 
-static const int msaaSamples[5] = { 1, 2, 4, 8, 16 };
+GLuint msaaSamples[5] = { 1, 2, 4, 8, 16 };
 
 
 static void glfw_error_callback(int error, const char *description)
@@ -641,6 +641,29 @@ int main()
                     outputFile << "SMAA ULTRA " << std::endl;
                     break;
                 }
+                //printf("previousSMAAQuality: %d, currentSMAAQuality: %d\n", previousSMAAQuality, currentSMAAQuality);
+                smaaEdgeShader.use();
+                smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+                smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+                smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+                smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+                smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+
+                smaaWeightShader.use();
+                smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+                smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+                smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+                smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+                smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+
+                smaaBlendShader.use();
+                smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+                smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+                smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+                smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+                smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+
+
                 previousSMAAQuality = currentSMAAQuality;
             }
 
@@ -808,11 +831,11 @@ int main()
 
             smaaEdgeShader.use();
             // set SMAA quality
-            smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            /*smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
             smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
             smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
             smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-            smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);*/
             //smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
@@ -831,11 +854,11 @@ int main()
 
             smaaWeightShader.use();
             // set SMAA quality
-            smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-            smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-            smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-            smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-            smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            //smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            //smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            //smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            //smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            //smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
             //smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
@@ -855,11 +878,11 @@ int main()
             /* NEIGHBORHOOD BLENDING PASS */
             smaaBlendShader.use();
             // set SMAA quality
-            smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-            smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-            smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-            smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-            smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            //smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            //smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            //smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            //smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            //smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
             //smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);

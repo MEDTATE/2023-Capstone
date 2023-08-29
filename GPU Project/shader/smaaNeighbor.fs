@@ -27,10 +27,9 @@ uniform vec4 screenSize;
 
 uniform float smaaThershold;
 uniform float smaaDepthThreshold;
-uniform uint smaaMaxSearchSteps;
-uniform uint smaaMaxSearchStepsDiag;
-uniform uint smaaCornerRounding;
-
+uniform int smaaMaxSearchSteps;
+uniform int smaaMaxSearchStepsDiag;
+uniform int smaaCornerRounding;
 
 #define SMAA_RT_METRICS screenSize
 #define SMAA_GLSL_4 1
@@ -41,6 +40,11 @@ uniform uint smaaCornerRounding;
 #define LinearSampler linearSampler
 #define PointSampler  nearestSampler
 
+#define SMAA_THRESHOLD smaaThershold
+#define SMAA_DEPTH_THRESHOLD smaaDepthThreshold
+#define SMAA_MAX_SEARCH_STEPS smaaMaxSearchSteps
+#define SMAA_MAX_SEARCH_STEPS_DIAG smaaMaxSearchStepsDiag
+#define SMAA_CORNER_ROUNDING smaaCornerRounding
 
 
 /**
