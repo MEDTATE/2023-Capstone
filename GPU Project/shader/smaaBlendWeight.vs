@@ -27,9 +27,7 @@ uniform vec4 screenSize;
 
 #define SMAA_RT_METRICS screenSize
 
-uniform uint smaaMaxSearchSteps;
-
-#define SMAA_MAX_SEARCH_STEPS 16
+uniform int smaaMaxSearchSteps;
 
 #define mad(a, b, c) fma(a, b, c)
 #define API_V_DIR(v) -(v)
@@ -45,7 +43,7 @@ void SMAABlendingWeightCalculationVS(vec2 texcoord,
 
     // And these for the searches, they indicate the ends of the loops:
     offset[2] = mad(SMAA_RT_METRICS.xxyy,
-                    vec4(-2.0, 2.0, API_V_DIR(-2.0), API_V_DIR(2.0)) * float(SMAA_MAX_SEARCH_STEPS),
+                    vec4(-2.0, 2.0, API_V_DIR(-2.0), API_V_DIR(2.0)) * float(smaaMaxSearchSteps),
                     vec4(offset[0].xz, offset[1].yw));
 }
 
