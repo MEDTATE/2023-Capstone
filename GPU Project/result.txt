@@ -1,0 +1,17 @@
+0.1FPS/ 18697.7ms
+MSAA 16X 
+SMAA ULTRA 
+Current Scene : Container 
+436.6FPS/ 2.3ms
+571.2FPS/ 1.8ms
+682.9FPS/ 1.5ms
+691.9FPS/ 1.4ms
+743.6FPS/ 1.3ms
+733.5FPS/ 1.4ms
+756.6FPS/ 1.3ms
+393.5FPS/ 2.5ms
+27.1FPS/ 36.9ms
+29.6FPS/ 33.8ms
+29.3FPS/ 34.1ms
+21.5FPS/ 46.5ms
+AA Method : SMAA 

@@ -916,12 +916,12 @@ int main()
 
             smaaEdgeShader.use();
             // set SMAA quality
-            /*smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
             smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
             smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
             smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-            smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);*/
-            //smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+            smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -939,12 +939,12 @@ int main()
 
             smaaWeightShader.use();
             // set SMAA quality
-            //smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-            //smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-            //smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-            //smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-            //smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-            //smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+            smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
 
@@ -963,12 +963,12 @@ int main()
             /* NEIGHBORHOOD BLENDING PASS */
             smaaBlendShader.use();
             // set SMAA quality
-            //smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-            //smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-            //smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-            //smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-            //smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-            //smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+            smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+            smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+            smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+            smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+            smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+            smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
             glBindVertexArray(quadVAO);
 
@@ -1068,6 +1068,11 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
         glBindTexture(GL_TEXTURE_2D, edgeTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glBindTexture(GL_TEXTURE_2D, blendTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+        glBindTexture(GL_TEXTURE_2D, currentTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D, previousTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
         glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
