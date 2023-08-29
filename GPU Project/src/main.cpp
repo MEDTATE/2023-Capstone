@@ -18,6 +18,8 @@
 
 #include <iostream>
 #include <iomanip>
+#include <thread>
+#include <chrono>
 #include <AreaTex.h>
 #include <SearchTex.h>
 
@@ -51,6 +53,8 @@ double crntTime = 0.0;
 double timeDiff;
 unsigned int counter = 0;
 std::string frameDisplay;
+void timeChecker(std::ofstream& outputFile, bool& benchActive);
+
 
 // AA variables
 static bool antiAliasing;
@@ -472,7 +476,7 @@ int main()
             msStream << std::fixed << std::setprecision(1) << ms;
             frameDisplay = fpsStream.str() + "FPS/ " + msStream.str() + "ms";
 
-            outputFile << frameDisplay + "\n";
+            outputFile << fpsStream.str() + "\n";
 
             prevTime = crntTime;
             counter = 0;
@@ -496,7 +500,7 @@ int main()
         {
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 450), 0);
-            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Frame Counter");
 
@@ -690,10 +694,17 @@ int main()
                 previousScene = currentScene;
             }
 
+
+            bool benchActive = false;
             ImGui::NewLine();
-            if (ImGui::Button("Benchmark (5s)"))
-                outputFile << "Processing Benchmark of each scene for 5s..." << std::endl;
-            // Benchmark();
+            if (ImGui::Button("Benchmark(10s)"))
+            {
+                benchActive = true;
+                std::thread timeCheckerThread(timeChecker, std::ref(outputFile), std::ref(benchActive));
+                timeCheckerThread.detach();
+            }
+
+
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -1058,4 +1069,19 @@ void changeViewpoint(int view)
         camera.Pitch = 33.30;
         camera.ProcessMouseMovement(0, 0);
     }
+}
+
+void timeChecker(std::ofstream& outputFile, bool& benchActive)
+{
+    std::cout << "timer set" << std::endl;
+    outputFile << "start benchmarking" << std::endl;
+    int targetTimeSeconds = 10;
+
+    std::chrono::seconds waitTime(targetTimeSeconds);
+
+    std::this_thread::sleep_for(waitTime);
+    outputFile << "recorded fps for 10s" <<std::endl;
+
+    benchActive = false;
+    std::cout << "timer ended" << std::endl;
 }
