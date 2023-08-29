@@ -33,6 +33,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+result.txt
 !assimp-vc143-mt.dll
 !assimp-vc143-mtd.dll
 
