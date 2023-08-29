@@ -114,9 +114,9 @@ struct SMAAParameters
 
 SMAAParameters smaaPresets[4] =
 {
-        {0.15f, 0.1f * 0.15f, 1, 0, 0} // low
+        {0.15f, 0.1f * 0.15f, 4, 0, 0} // low
         ,
-        {0.10f, 0.1f * 0.10f, 1, 0, 0} // medium
+        {0.10f, 0.1f * 0.10f, 8, 0, 0} // medium
         ,
         {0.10f, 0.1f * 0.10f, 16, 8, 25} // high
         ,
@@ -690,29 +690,6 @@ int main()
                     outputFile << "SMAA ULTRA " << std::endl;
                     break;
                 }
-                //printf("previousSMAAQuality: %d, currentSMAAQuality: %d\n", previousSMAAQuality, currentSMAAQuality);
-                smaaEdgeShader.use();
-                smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-
-                smaaWeightShader.use();
-                smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-
-                smaaBlendShader.use();
-                smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-
-
                 previousSMAAQuality = currentSMAAQuality;
             }
 
