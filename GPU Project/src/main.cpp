@@ -45,6 +45,11 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+float offsetX = 0.0f;
+float offsetY = 0.0f;
+
+double jitterTime;
+
 // fps counter
 double prevTime = 0.0;
 double crntTime = 0.0;
@@ -506,6 +511,12 @@ int main()
         crntTime = glfwGetTime();
         timeDiff = crntTime - prevTime;
         counter++;
+
+        //taa jittering
+        /*for (int i = 0; i < 16; i++) {
+            jitterTime[i] = crntTime;
+        }*/
+
         if (timeDiff >= 1.0 / 5.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
@@ -573,7 +584,7 @@ int main()
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("MSAA", &msaa)) {
-                    fxaa = smaa = taa = false;
+                    fxaa = smaa = false;
                     currentAA = 1;
                     outputFile << "AA Method : MSAA " << std::endl;
                 }
@@ -816,13 +827,6 @@ int main()
 
         if (msaa) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
@@ -837,23 +841,19 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (fxaa) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -867,23 +867,15 @@ int main()
             glBindTexture(GL_TEXTURE_2D, colorTex);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (smaa) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
             /* EDGE DETECTION PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
             glDisable(GL_DEPTH_TEST);
@@ -956,12 +948,9 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
@@ -973,6 +962,10 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
 
             taaShader.use();
+            taaShader.setFloat("jitterTime", crntTime);
+
+            //printf("x = %f, y = %f\n", sin(crntTime) * 0.001, cos(crntTime) * 0.001);
+
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, currentTex);
@@ -980,6 +973,26 @@ int main()
             glBindTexture(GL_TEXTURE_2D, previousTex);
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glBindVertexArray(quadVAO);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, currentTex);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, previousTex);
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            printf("x:%f, y:%f, time:%f \n", sin(crntTime) * 0.001, cos(crntTime) * 0.001, crntTime);
         }
 
 
