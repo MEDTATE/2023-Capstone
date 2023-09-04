@@ -51,6 +51,12 @@ double timeDiff;
 unsigned int counter = 0;
 std::string frameDisplay;
 
+// detail screen
+float cursorPosX = 0.0;
+float cursorPosY = 0.0;
+float xSaved = 0.0;
+float ySaved = 0.0;
+
 // AA variables
 static bool antiAliasing;
 static bool msaa;
@@ -726,7 +732,6 @@ int main()
                 return 0;
 
             ImGui::End();
-            ImGui::Render();
         }
 
         if (antiAliasing)
@@ -901,21 +906,59 @@ int main()
 
         /* ----- Render detail image where cursor located ----- */
         if (detailScreen) {
-            glViewport(60, 60, 310, 310);
+            unsigned int viewportSize = 300;
+            unsigned int viewportBeginX = SCR_WIDTH - 360;
+            unsigned int viewportBeginY = SCR_HEIGHT - 360;
 
-            //printf("lastX: %f, lastY: %f\n", lastX, lastY);
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                cursorPosX = cursorPosX;
+                cursorPosY = cursorPosY;
+            }
+            else {
+                cursorPosX = lastX;
+                cursorPosY = SCR_HEIGHT - lastY;
+            }
+
+            ImGui::SetNextWindowSize(ImVec2(viewportSize + 10, viewportSize + 70), 0);
+            ImGui::SetNextWindowPos(ImVec2(viewportBeginX, 60));
+            ImGui::Begin("Detail Screen", NULL, ImGuiWindowFlags_NoMove);
+
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, detailFBO);
-            glBlitFramebuffer(lastX - 50, lastY + 100, lastX + 50, lastY + 200, 0, 0, 250, 250, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            /* ----- Cursor is the center of the detail screen ----- */
+            glBlitFramebuffer(cursorPosX - 50, cursorPosY - 50, cursorPosX + 70, cursorPosY + 70, 0, 0, 300, 300, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-            screenShader.use();
-            glBindVertexArray(quadVAO);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, detailTex); // use the now resolved color attachment as the quad's texture
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glViewport(viewportBeginX, viewportBeginY, viewportSize, viewportSize);
+
+            // we get the screen position of the window
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+
+            ImGui::GetWindowDrawList()->AddImage(
+                (void*)detailTex,
+                ImVec2(pos.x, pos.y + 30),
+                ImVec2(pos.x + viewportSize, pos.y + viewportSize + 30),
+                ImVec2(0, 1),
+                ImVec2(1, 0)
+            );
+            
+            ImGui::SeparatorText("Press and hold SPACE to lock the view");
+
+            ImGui::End();
+
+            //if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+            //    //printf("lastX: %f, lastY: %f\n", xPos, yPos);
+            //    screenShader.use();
+            //    glBindVertexArray(quadVAO);
+            //    glActiveTexture(GL_TEXTURE0);
+            //    glBindTexture(GL_TEXTURE_2D, detailTex); // use the now resolved color attachment as the quad's texture
+            //    glDrawArrays(GL_TRIANGLES, 0, 6);
+            //}
+
         }
+
+        ImGui::Render();
 
         // Render dear imgui into screen
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
