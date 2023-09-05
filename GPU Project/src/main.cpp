@@ -42,6 +42,7 @@ Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+bool allowMouseInput = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -740,6 +741,7 @@ int main()
 
         if (!isImage)
         {
+            allowMouseInput = true;
             modelShader.use();
             modelShader.setMat4("projection", projection);
             modelShader.setMat4("view", view);
@@ -751,6 +753,7 @@ int main()
         }
         else
         {
+            allowMouseInput = false;
             imageShader.use();
             imageShader.setMat4("projection", projection);
             imageShader.setMat4("view", view);
@@ -767,11 +770,9 @@ int main()
             // modelShader.setMat4("projection", projection);
             imageShader.setMat4("model", model);
 
-            // �̹����� ���ε��� �ؽ�ó ������ Ȱ��ȭ
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, imageTex);
 
-            // ����VAO ���ε� �� �׸���
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
@@ -974,6 +975,12 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
+    // mouse disabled when image is on
+    if (!allowMouseInput)
+    {
+        return;
+    }
+
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
