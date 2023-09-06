@@ -964,10 +964,10 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
 
             taaShader.use();
-            taaShader.setFloat("jitterTime", crntTime);
-
-            camera.Position.y += sin(crntTime) * 0.00001;
-            camera.Position.z += cos(crntTime) * 0.00001;
+            
+            float jitter = (rand() % 100) / 100000.0f;
+            camera.Position.y += (sin(crntTime) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
+            camera.Position.z += (cos(crntTime) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
 
             printf("x:% f, y;%f\n", camera.Position.y, camera.Position.z);
 
