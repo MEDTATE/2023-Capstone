@@ -18,6 +18,8 @@
 
 #include <iostream>
 #include <iomanip>
+#include <thread>
+#include <chrono>
 #include <AreaTex.h>
 #include <SearchTex.h>
 
@@ -29,6 +31,7 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void changeViewpoint(int view);
+void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
 // settings
 float SCR_WIDTH = 1600.0;
@@ -39,6 +42,7 @@ Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+bool allowMouseInput = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -54,8 +58,6 @@ std::string frameDisplay;
 // detail screen
 float cursorPosX = 0.0;
 float cursorPosY = 0.0;
-float xSaved = 0.0;
-float ySaved = 0.0;
 
 // AA variables
 static bool antiAliasing;
@@ -500,7 +502,7 @@ int main()
             msStream << std::fixed << std::setprecision(1) << ms;
             frameDisplay = fpsStream.str() + "FPS/ " + msStream.str() + "ms";
 
-            outputFile << frameDisplay + "\n";
+            outputFile << fpsStream.str() + "\n";
 
             prevTime = crntTime;
             counter = 0;
@@ -524,7 +526,7 @@ int main()
         {
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(150, 490), 0);
-            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Frame Counter");
 
@@ -722,10 +724,14 @@ int main()
             ImGui::Checkbox("Show", &detailScreen);
 
             /*----- Benchmarking -----*/
+            bool benchActive = false;
             ImGui::NewLine();
-            if (ImGui::Button("Benchmark (5s)"))
-                outputFile << "Processing Benchmark of each scene for 5s..." << std::endl;
-            // Benchmark();
+            if (ImGui::Button("Benchmark(10s)"))
+            {
+                benchActive = true;
+                std::thread timeCheckerThread(timeChecker, std::ref(outputFile), std::ref(benchActive));
+                timeCheckerThread.detach();
+            }
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -761,6 +767,7 @@ int main()
 
         if (!isImage)
         {
+            allowMouseInput = true;
             modelShader.use();
             modelShader.setMat4("projection", projection);
             modelShader.setMat4("view", view);
@@ -772,6 +779,7 @@ int main()
         }
         else
         {
+            allowMouseInput = false;
             imageShader.use();
             imageShader.setMat4("projection", projection);
             imageShader.setMat4("view", view);
@@ -788,11 +796,9 @@ int main()
             // modelShader.setMat4("projection", projection);
             imageShader.setMat4("model", model);
 
-            // �̹����� ���ε��� �ؽ�ó ������ Ȱ��ȭ
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, imageTex);
 
-            // ����VAO ���ε� �� �׸���
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
@@ -930,7 +936,7 @@ int main()
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-            glViewport(viewportBeginX, viewportBeginY, viewportSize, viewportSize);
+            //glViewport(viewportBeginX, viewportBeginY, viewportSize, viewportSize);
 
             // we get the screen position of the window
             ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -1050,6 +1056,12 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
+    // mouse disabled when image is on
+    if (!allowMouseInput)
+    {
+        return;
+    }
+
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
@@ -1145,4 +1157,22 @@ void changeViewpoint(int view)
         camera.Pitch = 33.30;
         camera.ProcessMouseMovement(0, 0);
     }
+}
+
+void timeChecker(std::ofstream& outputFile, bool& benchActive)
+{
+    std::cout << "timer set" << std::endl;
+    outputFile << "start benchmarking" << std::endl;
+    int targetTimeSeconds = 10;
+
+
+    std::chrono::seconds waitTime(targetTimeSeconds);
+
+
+    std::this_thread::sleep_for(waitTime);
+    outputFile << "recorded fps for 10s" << std::endl;
+
+
+    benchActive = false;
+    std::cout << "timer ended" << std::endl;
 }
