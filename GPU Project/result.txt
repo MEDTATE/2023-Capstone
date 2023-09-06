@@ -2,15 +2,3 @@
 MSAA 16X 
 SMAA ULTRA 
 Current Scene : Container 
-1247.4
-1480.9
-1451.7
-1534.2
-1481.2
-1437.6
-284.8
-55.2
-7.5
-60.0
-56.3
-AA Method : FXAA 

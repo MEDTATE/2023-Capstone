@@ -963,13 +963,19 @@ int main()
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
 
-            taaShader.use();
-            
-            float jitter = (rand() % 100) / 100000.0f;
-            camera.Position.y += (sin(crntTime) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
-            camera.Position.z += (cos(crntTime) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
+            float jitter = (rand() % 100) / 200000.0f;
+            float jitterX = (sin(crntTime) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+            float jitterY = (cos(crntTime) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
 
-            printf("x:% f, y;%f\n", camera.Position.y, camera.Position.z);
+            taaShader.use();
+            taaShader.setFloat("jitterX", jitterX);
+            taaShader.setFloat("jitterY", jitterY);
+            
+            /*float jitter = (rand() % 100) / 100000.0f;
+            camera.Position.y += (sin(crntTime) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
+            camera.Position.z += (cos(crntTime) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));*/
+
+            printf("x:% f, y;%f\n", jitterX, jitterY);
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
