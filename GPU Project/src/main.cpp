@@ -31,11 +31,11 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 void changeViewpoint(int view);
+void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
 // settings
 float SCR_WIDTH = 1600.0;
 float SCR_HEIGHT = 900.0;
-float SCR_SCALE = SCR_HEIGHT / SCR_WIDTH;
 
 // camera
 Camera camera(glm::vec3(-35.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -360.0f, -0.5f);
@@ -57,6 +57,10 @@ std::string frameDisplay;
 void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
 
+// detail screen
+float cursorPosX = 0.0;
+float cursorPosY = 0.0;
+
 // AA variables
 static bool antiAliasing;
 static bool msaa;
@@ -69,11 +73,14 @@ static int currentAA = 1;
 
 static bool isImage;
 
+static bool detailScreen;
+
 GLuint colorTex;
 GLuint multiSamplingTex;
 GLuint edgeTex;
 GLuint blendTex;
 GLuint imageTex;
+GLuint detailTex;
 
 GLuint areaTex;
 GLuint searchTex;
@@ -82,9 +89,12 @@ GLuint colorFBO;
 GLuint multisampledFBO;
 GLuint edgeFBO;
 GLuint blendFBO;
+GLuint detailFBO;
+GLuint currentFBO;
 
 GLuint colorRBO;
 GLuint multiSampledRBO;
+GLuint detailRBO;
 
 GLuint quadVAO, quadVBO;
 
@@ -97,6 +107,8 @@ static int previousMSAAQuailty = 0;
 
 static int currentSMAAQuality = 3;
 static int previousSMAAQuality = 0;
+
+
 
 struct SMAAParameters
 {
@@ -248,6 +260,12 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+    glGenTextures(1, &detailTex);
+    glBindTexture(GL_TEXTURE_2D, detailTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 250, 250, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
     // load Image
     // -----------
     int width, height, numChannels;
@@ -336,6 +354,15 @@ int main()
     glGenFramebuffers(1, &blendFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blendTex, 0);
+
+    glGenFramebuffers(1, &detailFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, detailFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, detailTex, 0);
+
+    glGenRenderbuffers(1, &detailRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, detailRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 250, 250);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, detailRBO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -497,10 +524,10 @@ int main()
         // -----
         processInput(window);
 
-        // render GUI
+        /* ----- Render Control Panel GUI ----- */
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 450), 0);
+            ImGui::SetNextWindowSize(ImVec2(150, 490), 0);
             ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
 
             ImGui::SeparatorText("Frame Counter");
@@ -573,7 +600,7 @@ int main()
                 ImGui::EndTable();
             }
 
-            // MSAA Quality
+            /* ----- MSAA Quality ----- */
             const char *msaaQualities[] = {"1X", "2X", "4X", "8X", "16X"};
             
             ImGui::SeparatorText("MSAA Quality");
@@ -619,7 +646,7 @@ int main()
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
 
-            // SMAA Quality
+            /* ----- SMAA Quality ----- */
             const char *smaaQualities[] = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
 
             ImGui::SeparatorText("SMAA Quality");
@@ -649,7 +676,7 @@ int main()
                 previousSMAAQuality = currentSMAAQuality;
             }
 
-            // Change Viewpoint
+            /* ----- Change Viewpoint ----- */
             ImGui::SeparatorText("Viewpoint");
             if (ImGui::Button("1"))
                 changeViewpoint(1);
@@ -660,7 +687,7 @@ int main()
             if (ImGui::Button("3"))
                 changeViewpoint(3);
 
-            // Change Scene
+            /*----- Change Scene -----*/
             const char *scenes[] = {"Container", "Sponza", "Image"};
             static int currentScene = 0;
             static int previousScene = 3;
@@ -695,7 +722,10 @@ int main()
                 previousScene = currentScene;
             }
 
+            ImGui::SeparatorText("Detail Screen");
+            ImGui::Checkbox("Show", &detailScreen);
 
+            /*----- Benchmarking -----*/
             bool benchActive = false;
             ImGui::NewLine();
             if (ImGui::Button("Benchmark(10s)"))
@@ -704,8 +734,6 @@ int main()
                 std::thread timeCheckerThread(timeChecker, std::ref(outputFile), std::ref(benchActive));
                 timeCheckerThread.detach();
             }
-
-
 
             ImGui::NewLine();
             if (ImGui::Button("Exit"))
@@ -884,8 +912,63 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
-        // Render dear imgui into screen
+        /* ----- Render detail image where cursor located ----- */
+        if (detailScreen) {
+            unsigned int viewportSize = 300;
+            unsigned int viewportBeginX = SCR_WIDTH - 360;
+            unsigned int viewportBeginY = SCR_HEIGHT - 360;
+
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                cursorPosX = cursorPosX;
+                cursorPosY = cursorPosY;
+            }
+            else {
+                cursorPosX = lastX;
+                cursorPosY = SCR_HEIGHT - lastY;
+            }
+
+            ImGui::SetNextWindowSize(ImVec2(viewportSize + 10, viewportSize + 70), 0);
+            ImGui::SetNextWindowPos(ImVec2(viewportBeginX, 60));
+            ImGui::Begin("Detail Screen", NULL, ImGuiWindowFlags_NoMove);
+
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, detailFBO);
+            /* ----- Cursor is the center of the detail screen ----- */
+            glBlitFramebuffer(cursorPosX - 50, cursorPosY - 50, cursorPosX + 70, cursorPosY + 70, 0, 0, 300, 300, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            //glViewport(viewportBeginX, viewportBeginY, viewportSize, viewportSize);
+
+            // we get the screen position of the window
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+
+            ImGui::GetWindowDrawList()->AddImage(
+                (void*)detailTex,
+                ImVec2(pos.x, pos.y + 30),
+                ImVec2(pos.x + viewportSize, pos.y + viewportSize + 30),
+                ImVec2(0, 1),
+                ImVec2(1, 0)
+            );
+            
+            ImGui::SeparatorText("Press and hold SPACE to lock the view");
+
+            ImGui::End();
+
+            //if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+            //    //printf("lastX: %f, lastY: %f\n", xPos, yPos);
+            //    screenShader.use();
+            //    glBindVertexArray(quadVAO);
+            //    glActiveTexture(GL_TEXTURE0);
+            //    glBindTexture(GL_TEXTURE_2D, detailTex); // use the now resolved color attachment as the quad's texture
+            //    glDrawArrays(GL_TRIANGLES, 0, 6);
+            //}
+
+        }
+
         ImGui::Render();
+
+        // Render dear imgui into screen
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
