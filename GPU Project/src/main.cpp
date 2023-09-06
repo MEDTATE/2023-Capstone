@@ -263,8 +263,8 @@ int main()
     glBindTexture(GL_TEXTURE_2D, currentTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glGenTextures(1, &previousTex);
@@ -408,7 +408,7 @@ int main()
     // -----------
     fxaaShader.use();
     fxaaShader.setInt("colorTex", 0);
-    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+    //fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Edge Shader
     // -----------
@@ -863,7 +863,8 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
 
             fxaaShader.use();
-            //fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+            fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, colorTex);
@@ -949,9 +950,14 @@ int main()
         if (taa) {
             //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
@@ -960,7 +966,10 @@ int main()
             taaShader.use();
             taaShader.setFloat("jitterTime", crntTime);
 
-            //printf("x = %f, y = %f\n", sin(crntTime) * 0.001, cos(crntTime) * 0.001);
+            camera.Position.y += sin(crntTime) * 0.00001;
+            camera.Position.z += cos(crntTime) * 0.00001;
+
+            printf("x:% f, y;%f\n", camera.Position.y, camera.Position.z);
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -987,8 +996,6 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            printf("x:%f, y:%f, time:%f \n", sin(crntTime) * 0.001, cos(crntTime) * 0.001, crntTime);
         }
 
 
@@ -1162,6 +1169,7 @@ void changeViewpoint(int view)
         camera.Yaw = -360.0f;
         camera.Pitch = -0.5f;
         camera.ProcessMouseMovement(0, 0);
+
     }
     if (view == 2)
     {

@@ -39,13 +39,15 @@ layout (location = 0) out vec2 texcoord;
 
 uniform float jitterTime;
  
-float jitterX = sin(jitterTime) * 0.001;
-float jitterY = cos(jitterTime) * 0.001;
+//float jitterX = sin(jitterTime) * 0.01;
+//float jitterY = cos(jitterTime) * 0.01;
 
 
 void main(void)
 {
     vec2 pos = triangleVertex(gl_VertexID, texcoord);
 
-    gl_Position = vec4(pos.x + jitterX, pos.y + jitterY, 1.0, 1.0);
+    //gl_Position = vec4(pos.x + jitterX, pos.y + jitterY, 1.0, 1.0);
+
+    gl_Position = vec4(pos, 1.0, 1.0);
 }
