@@ -1011,6 +1011,12 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 
+    float velocity = deltaTime * 5.0f;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera.Position += camera.Up * velocity;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera.Position -= camera.Up * velocity;
+
     /*
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
     {
