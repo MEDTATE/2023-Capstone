@@ -61,12 +61,16 @@ void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
 // jittering
 int num = 0;
+int arrayNum = 0;
+int renderNum = 0;
 
 float jitter = 0.0;
 float jitterX = 0.0;
 float jitterY = 0.0;
 
-double jitterTime = 0.0;
+float jitterX_Array[16];
+float jitterY_Array[16];
+
 
 // detail screen
 float cursorPosX = 0.0;
@@ -991,54 +995,77 @@ int main()
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if (num % 20 == 0) {
-                jitterTime = crntTime;
+            if (arrayNum < 16) {
+                if (num % 20 == 0) {
 
-                printf("%d\n", crntTime);
+                    printf("num= %i, array= %i\n", num, arrayNum);
 
-                jitter = (rand() % 100) / 150000.0f;
-                jitterX = (sin(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
-                jitterY = (cos(num+2) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+                    jitter = (rand() % 200) / 150000.0f;
+                    jitterX_Array[arrayNum] = (sin(num) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
+                    jitterY_Array[arrayNum] = (cos(num) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
 
-                //printf("num: %d, x:%f, y;%f\n", num,  jitterX, jitterY);
+                    jitterX = jitterX_Array[arrayNum];
+                    jitterY = jitterY_Array[arrayNum];
 
-                num++;
+                    //printf("x:%f, y;%f\n", jitterX_Array[arrayNum], jitterY_Array[arrayNum]);
+
+                    num++;
+                    arrayNum++;
+
+                    
+                }
+                else {
+                    num++;
+                }
             }
-            else {
-                num++;
+
+            for (int i = 0; i < 16; i++) {
+
+                jitterX = jitterX_Array[i];
+                jitterY = jitterY_Array[i];
+
+                taaShader.use();
+                taaShader.setFloat("jitterX", jitterX);
+                taaShader.setFloat("jitterY", jitterY);
+
+                glBindVertexArray(quadVAO);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, currentTex);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, previousTex);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                
+
+                taaShader.use();
+                taaShader.setFloat("jitterX", jitterX);
+                taaShader.setFloat("jitterY", jitterY);
+
+                glBindVertexArray(quadVAO);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, currentTex);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, previousTex);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
-
-            taaShader.use();
-            taaShader.setFloat("jitterX", jitterX);
-            taaShader.setFloat("jitterY", jitterY);
-
-            glBindVertexArray(quadVAO);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, currentTex);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, previousTex);
-
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            taaShader.use();
-
-            glBindVertexArray(quadVAO);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, currentTex);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, previousTex);
-
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
 
