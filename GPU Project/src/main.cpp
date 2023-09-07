@@ -51,8 +51,6 @@ float lastFrame = 0.0f;
 float offsetX = 0.0f;
 float offsetY = 0.0f;
 
-double jitterTime;
-
 // fps counter
 double prevTime = 0.0;
 double crntTime = 0.0;
@@ -61,6 +59,14 @@ unsigned int counter = 0;
 std::string frameDisplay;
 void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
+// jittering
+int num = 0;
+
+float jitter = 0.0;
+float jitterX = 0.0;
+float jitterY = 0.0;
+
+double jitterTime = 0.0;
 
 // detail screen
 float cursorPosX = 0.0;
@@ -543,11 +549,6 @@ int main()
         timeDiff = crntTime - prevTime;
         counter++;
 
-        //taa jittering
-        /*for (int i = 0; i < 16; i++) {
-            jitterTime[i] = crntTime;
-        }*/
-
         if (timeDiff >= 1.0 / 5.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
@@ -581,7 +582,7 @@ int main()
         /* ----- Render Control Panel GUI ----- */
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(200, 500), 0);
+            ImGui::SetNextWindowSize(ImVec2(200, 550), 0);
             ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
             
             ImGui::SeparatorText("Frame Counter");
@@ -990,15 +991,26 @@ int main()
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
 
-            float jitter = (rand() % 100) / 150000.0f;
-            float jitterX = (sin(crntTime) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
-            float jitterY = (cos(crntTime) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+            if (num % 20 == 0) {
+                jitterTime = crntTime;
+
+                printf("%d\n", crntTime);
+
+                jitter = (rand() % 100) / 150000.0f;
+                jitterX = (sin(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+                jitterY = (cos(num+2) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+
+                //printf("num: %d, x:%f, y;%f\n", num,  jitterX, jitterY);
+
+                num++;
+            }
+            else {
+                num++;
+            }
 
             taaShader.use();
             taaShader.setFloat("jitterX", jitterX);
             taaShader.setFloat("jitterY", jitterY);
-
-            printf("x:% f, y;%f\n", jitterX, jitterY);
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -1015,6 +1027,8 @@ int main()
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            taaShader.use();
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
