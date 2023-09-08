@@ -48,6 +48,9 @@ bool allowMouseInput = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+float offsetX = 0.0f;
+float offsetY = 0.0f;
+
 // fps counter
 double prevTime = 0.0;
 double crntTime = 0.0;
@@ -55,6 +58,16 @@ double timeDiff;
 unsigned int counter = 0;
 std::string frameDisplay;
 void timeChecker(std::ofstream& outputFile, bool& benchActive);
+
+// jittering
+int num = 0;
+
+float jitter = 0.0;
+float jitterX = 0.0;
+float jitterY = 0.0;
+
+float jitterX_Array[16];
+float jitterY_Array[16];
 
 
 // detail screen
@@ -67,6 +80,8 @@ static bool msaa;
 static bool fxaa;
 static bool smaa;
 static bool taa;
+static bool wasTAAOn;
+static bool smaat2x;
 // fxaa = 1, smaa = 2, taa = 3, msaa = 4
 // default = msaa
 static int currentAA = 1;
@@ -85,12 +100,17 @@ GLuint detailTex;
 GLuint areaTex;
 GLuint searchTex;
 
+GLuint currentTex;
+GLuint previousTex;
+
 GLuint colorFBO;
 GLuint multisampledFBO;
 GLuint edgeFBO;
 GLuint blendFBO;
 GLuint detailFBO;
+
 GLuint currentFBO;
+GLuint previousFBO;
 
 GLuint colorRBO;
 GLuint multiSampledRBO;
@@ -260,11 +280,28 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+    glGenTextures(1, &currentTex);
+    glBindTexture(GL_TEXTURE_2D, currentTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenTextures(1, &previousTex);
+    glBindTexture(GL_TEXTURE_2D, previousTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
     glGenTextures(1, &detailTex);
     glBindTexture(GL_TEXTURE_2D, detailTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 250, 250, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
 
     // load Image
     // -----------
@@ -354,6 +391,13 @@ int main()
     glGenFramebuffers(1, &blendFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, blendTex, 0);
+    glGenFramebuffers(1, &currentFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, currentTex, 0);
+
+    glGenFramebuffers(1, &previousFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, previousTex, 0);
 
     glGenFramebuffers(1, &detailFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, detailFBO);
@@ -377,7 +421,9 @@ int main()
     Shader smaaEdgeShader("shader/smaaEdge.vs", "shader/smaaEdge.fs");
     Shader smaaWeightShader("shader/smaaBlendWeight.vs", "shader/smaaBlendWeight.fs");
     Shader smaaBlendShader("shader/smaaNeighbor.vs", "shader/smaaNeighbor.fs");
-
+    
+    Shader taaShader("shader/temporal.vs", "shader/temporal.fs");
+    
     // load models
     // -----------
     Model container("resources/objects/container/Container.obj");
@@ -398,7 +444,7 @@ int main()
     // -----------
     fxaaShader.use();
     fxaaShader.setInt("colorTex", 0);
-    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+    //fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Edge Shader
     // -----------
@@ -413,9 +459,9 @@ int main()
     smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
     smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
 
-    /*smaaEdgeShader.setFloat("predicationThreshold", 0.0);
-    smaaEdgeShader.setFloat("predicationScale", 0.0);
-    smaaEdgeShader.setFloat("predicationStrength", 0.0);*/
+    smaaEdgeShader.setFloat("predicationThreshold", 0.01);
+    smaaEdgeShader.setFloat("predicationScale", 2.0);
+    smaaEdgeShader.setFloat("predicationStrength", 0.4);
 
     smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
@@ -432,9 +478,11 @@ int main()
     smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
     smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
 
-    /*smaaweightShader.setFloat("predicationThreshold", 0.0);
-    smaaweightShader.setFloat("predicationScale", 0.0);
-    smaaweightShader.setFloat("predicationStrength", 0.0);*/
+    smaaWeightShader.setVec4("subsampleIndices", glm::vec4(1.0f, 1.0f, 1.0f, 0.0f));
+
+    smaaWeightShader.setFloat("predicationThreshold", 0.01);
+    smaaWeightShader.setFloat("predicationScale", 2.0);
+    smaaWeightShader.setFloat("predicationStrength", 0.4);
 
     smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
@@ -450,21 +498,31 @@ int main()
     smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
     smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
 
-    /*smaablendShader.setFloat("predicationThreshold", 0.0);
-    smaablendShader.setFloat("predicationScale", 0.0);
-    smaablendShader.setFloat("predicationStrength", 0.0);*/
+    smaaBlendShader.setFloat("predicationThreshold", 0.01);
+    smaaBlendShader.setFloat("predicationScale", 2.0);
+    smaaBlendShader.setFloat("predicationStrength", 0.4);
 
-    smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+    smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
-    float quadVertices[] = {// vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-                            // positions   // texCoords
-                            -1.0f, 1.0f, 0.0f, 1.0f,
-                            -1.0f, -1.0f, 0.0f, 0.0f,
-                            1.0f, -1.0f, 1.0f, 0.0f,
+    // TAA Shader
+    // ------------
+    taaShader.use();
+    taaShader.setInt("currentTex", 0);
+    taaShader.setInt("previousTex", 1);
+    taaShader.setInt("velocityTex", 2);
 
-                            -1.0f, 1.0f, 0.0f, 1.0f,
-                            1.0f, -1.0f, 1.0f, 0.0f,
-                            1.0f, 1.0f, 1.0f, 1.0f};
+    taaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
+    
+    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+
+    -1.0f,  1.0f,  0.0f, 1.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f, 1.0f
+    };
 
     // screen quad VAO
     glGenVertexArrays(1, &quadVAO);
@@ -485,6 +543,26 @@ int main()
         return 1;
     }
 
+    // Jittering
+    for (int i = 0; i < 16; i++) {
+
+        num = 0;
+        //printf("array= %i\n", i);
+
+        jitter = (rand() % 200) / 1500000.0f;
+        jitterX_Array[i] = (sin(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+        jitterY_Array[i] = (cos(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+
+        jitterX = jitterX_Array[i];
+        jitterY = jitterY_Array[i];
+
+
+        num++;
+
+        printf("x:%f, y;%f\n", jitterX_Array[i], jitterY_Array[i]);
+    }
+    
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -494,6 +572,7 @@ int main()
         crntTime = glfwGetTime();
         timeDiff = crntTime - prevTime;
         counter++;
+
         if (timeDiff >= 1.0 / 5.0)
         {
             double FPS = (1.0 / timeDiff) * counter;
@@ -527,9 +606,9 @@ int main()
         /* ----- Render Control Panel GUI ----- */
         {
             // Set window size before create it
-            ImGui::SetNextWindowSize(ImVec2(150, 490), 0);
-            ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
-
+            ImGui::SetNextWindowSize(ImVec2(200, 550), 0);
+            ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+            
             ImGui::SeparatorText("Frame Counter");
 
             ImGui::TextColored(ImVec4(1, 1, 0, 1), frameDisplay.c_str());
@@ -550,8 +629,11 @@ int main()
                     smaa = true;
                     break;
                 case 4:
-                    taa = true;
+                    smaat2x = true;
                     break;
+                }
+                if (wasTAAOn) {
+                    taa = true;
                 }
             }
 
@@ -560,44 +642,55 @@ int main()
                 ImGui::TableNextColumn();
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("MSAA", &msaa))
-                {
-                    fxaa = smaa = taa = false;
+                if (ImGui::Checkbox("MSAA", &msaa)) {
+                    fxaa = smaa = smaat2x = false;
                     currentAA = 1;
                     outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("FXAA", &fxaa))
-                {
-                    smaa = taa = msaa = false;
+                if (ImGui::Checkbox("FXAA", &fxaa)) {
+                    smaa = msaa = smaat2x = false;
                     currentAA = 2;
                     outputFile << "AA Method : FXAA " << std::endl;
                 }
+                ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("SMAA", &smaa))
-                {
-                    fxaa = taa = msaa = false;
+                if (ImGui::Checkbox("SMAA", &smaa)) {
+                    fxaa = msaa = smaat2x = false;
                     currentAA = 3;
                     outputFile << "AA Method : SMAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("TAA", &taa))
-                {
-                    fxaa = smaa = msaa = false;
+                if (ImGui::Checkbox("SMAA T2x", &smaat2x)) {
+                    fxaa = msaa = smaa = false;
                     currentAA = 4;
-                    outputFile << "AA Method : TAA " << std::endl;
-                }
-
-                // Bind to 'AA on' button
-                if (antiAliasing == false)
-                {
-                    msaa = false;
-                    fxaa = false;
-                    smaa = false;
-                    taa = false;
+                    outputFile << "AA Method : SMAA T2x " << std::endl;
                 }
 
                 ImGui::EndTable();
+            }
+            ImGui::SeparatorText("Temporal AA");
+            if (ImGui::Checkbox("TAA", &taa)) {
+                if (taa) {
+                    wasTAAOn = true;
+                    printf("wasTAAOn = true\n");
+                }
+                else {
+                    wasTAAOn = false;
+                    printf("wasTAAOn = false\n");
+                }
+                
+                outputFile << "AA Method : TAA " << std::endl;
+            }
+
+            // Bind to 'AA on' button
+            if (antiAliasing == false)
+            {
+                msaa = false;
+                fxaa = false;
+                smaa = false;
+                smaat2x = false;
+                taa = false;
             }
 
             /* ----- MSAA Quality ----- */
@@ -688,7 +781,7 @@ int main()
                 changeViewpoint(3);
 
             /*----- Change Scene -----*/
-            const char *scenes[] = {"Container", "Sponza", "Image"};
+            const char* scenes[] = { "Container", "Sponza", "Image"};
             static int currentScene = 0;
             static int previousScene = 3;
             ImGui::SeparatorText("Scene");
@@ -805,8 +898,7 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
-        if (msaa)
-        {
+        if (msaa) {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -821,9 +913,10 @@ int main()
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, colorTex); // use the now resolved color attachment as the quad's texture
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-        if (fxaa)
-        {
+        if (fxaa) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -831,14 +924,16 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
 
             fxaaShader.use();
-            //fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+            fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, colorTex);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-        if (smaa)
-        {
+        if (smaa) {
             /* EDGE DETECTION PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
             glDisable(GL_DEPTH_TEST);
@@ -910,7 +1005,76 @@ int main()
             glBindTexture(GL_TEXTURE_2D, blendTex);
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+        if (taa) {
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+            // clear all relevant buffers
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            for (int i = 0; i < 16; i++) {
+                jitterX = jitterX_Array[i];
+                jitterY = jitterY_Array[i];
+
+                //printf("x:%f, y;%f\n", jitterX_Array[num], jitterY_Array[num]);
+
+                taaShader.use();
+                taaShader.setFloat("jitterX", jitterX);
+                taaShader.setFloat("jitterY", jitterY);
+
+                glBindVertexArray(quadVAO);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, currentTex);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, previousTex);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
+                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                jitterX = jitterX_Array[i];
+                jitterY = jitterY_Array[i];
+
+                taaShader.use();
+                taaShader.setFloat("jitterX", jitterX);
+                taaShader.setFloat("jitterY", jitterY);
+
+                glBindVertexArray(quadVAO);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, currentTex);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, previousTex);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            }
+        }
+
 
         /* ----- Render detail image where cursor located ----- */
         if (detailScreen) {
@@ -1049,6 +1213,11 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
         glBindTexture(GL_TEXTURE_2D, blendTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+        glBindTexture(GL_TEXTURE_2D, currentTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glBindTexture(GL_TEXTURE_2D, previousTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
         glBindRenderbuffer(GL_RENDERBUFFER, multiSampledRBO);
         glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples[msaaQualityLevel], GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
         glBindRenderbuffer(GL_RENDERBUFFER, colorRBO);
@@ -1150,6 +1319,7 @@ void changeViewpoint(int view)
         camera.Yaw = -360.0f;
         camera.Pitch = -0.5f;
         camera.ProcessMouseMovement(0, 0);
+
     }
     if (view == 2)
     {
