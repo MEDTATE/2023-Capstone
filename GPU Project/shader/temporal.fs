@@ -1464,6 +1464,7 @@ float4 SMAAResolvePS(float2 texcoord,
     float4 current = SMAASamplePoint(currentColorTex, texcoord);
     float4 previous = SMAASamplePoint(previousColorTex, texcoord);
     return lerp(current, previous, 0.5);
+    //return current;
     #endif
 }
 
