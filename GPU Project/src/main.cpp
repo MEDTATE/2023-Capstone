@@ -80,6 +80,7 @@ static bool msaa;
 static bool fxaa;
 static bool smaa;
 static bool taa;
+static bool wasTAAOn;
 static bool smaat2x;
 // fxaa = 1, smaa = 2, taa = 3, msaa = 4
 // default = msaa
@@ -606,7 +607,7 @@ int main()
         {
             // Set window size before create it
             ImGui::SetNextWindowSize(ImVec2(200, 550), 0);
-            ImGui::Begin("Control Pannel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Control Panel", NULL, ImGuiWindowFlags_NoMove);  // Create a window called "Hello, world!" and append into it.
             
             ImGui::SeparatorText("Frame Counter");
 
@@ -628,11 +629,11 @@ int main()
                     smaa = true;
                     break;
                 case 4:
-                    taa = true;
-                    break;
-                case 5:
                     smaat2x = true;
                     break;
+                }
+                if (wasTAAOn) {
+                    taa = true;
                 }
             }
 
@@ -662,35 +663,34 @@ int main()
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA T2x", &smaat2x)) {
                     fxaa = msaa = smaa = false;
-                    currentAA = 5;
+                    currentAA = 4;
                     outputFile << "AA Method : SMAA T2x " << std::endl;
-                }
-
-                // Bind to 'AA on' button
-                if (antiAliasing == false)
-                {
-                    msaa = false;
-                    fxaa = false;
-                    smaa = false;
-                    smaat2x = false;
                 }
 
                 ImGui::EndTable();
             }
             ImGui::SeparatorText("Temporal AA");
-            if (ImGui::BeginTable("split", 2)) {
-                ImGui::TableNextRow();
-                ImGui::TableNextColumn();
-                if (ImGui::Checkbox("TAA", &taa)) {
-                    currentAA = 4;
-                    outputFile << "AA Method : TAA " << std::endl;
+            if (ImGui::Checkbox("TAA", &taa)) {
+                if (taa) {
+                    wasTAAOn = true;
+                    printf("wasTAAOn = true\n");
                 }
-                // Bind to 'AA on' button
-                if (antiAliasing == false) {
-                    taa = false;
+                else {
+                    wasTAAOn = false;
+                    printf("wasTAAOn = false\n");
                 }
+                
+                outputFile << "AA Method : TAA " << std::endl;
+            }
 
-                ImGui::EndTable();
+            // Bind to 'AA on' button
+            if (antiAliasing == false)
+            {
+                msaa = false;
+                fxaa = false;
+                smaa = false;
+                smaat2x = false;
+                taa = false;
             }
 
             /* ----- MSAA Quality ----- */
