@@ -1265,12 +1265,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
-    // mouse disabled when image is on
-    if (!allowMouseInput)
-    {
-        return;
-    }
-
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
@@ -1292,6 +1286,12 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 
     lastX = xpos;
     lastY = ypos;
+
+    // mouse disabled when image is on
+    if (!allowMouseInput)
+    {
+        return;
+    }
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
