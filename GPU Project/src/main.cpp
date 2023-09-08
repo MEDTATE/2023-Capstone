@@ -61,8 +61,6 @@ void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
 // jittering
 int num = 0;
-int arrayNum = 0;
-int renderNum = 0;
 
 float jitter = 0.0;
 float jitterX = 0.0;
@@ -82,6 +80,7 @@ static bool msaa;
 static bool fxaa;
 static bool smaa;
 static bool taa;
+static bool smaat2x;
 // fxaa = 1, smaa = 2, taa = 3, msaa = 4
 // default = msaa
 static int currentAA = 1;
@@ -543,6 +542,26 @@ int main()
         return 1;
     }
 
+    // Jittering
+    for (int i = 0; i < 16; i++) {
+
+        num = 0;
+        //printf("array= %i\n", i);
+
+        jitter = (rand() % 200) / 1500000.0f;
+        jitterX_Array[i] = (sin(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+        jitterY_Array[i] = (cos(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+
+        jitterX = jitterX_Array[i];
+        jitterY = jitterY_Array[i];
+
+
+        num++;
+
+        printf("x:%f, y;%f\n", jitterX_Array[i], jitterY_Array[i]);
+    }
+    
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -611,6 +630,9 @@ int main()
                 case 4:
                     taa = true;
                     break;
+                case 5:
+                    smaat2x = true;
+                    break;
                 }
             }
 
@@ -620,22 +642,28 @@ int main()
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("MSAA", &msaa)) {
-                    fxaa = smaa = false;
+                    fxaa = smaa = smaat2x = false;
                     currentAA = 1;
                     outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
-                    smaa = msaa = false;
+                    smaa = msaa = smaat2x = false;
                     currentAA = 2;
                     outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
-                    fxaa = msaa = false;
+                    fxaa = msaa = smaat2x = false;
                     currentAA = 3;
                     outputFile << "AA Method : SMAA " << std::endl;
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::Checkbox("SMAA T2x", &smaat2x)) {
+                    fxaa = msaa = smaa = false;
+                    currentAA = 5;
+                    outputFile << "AA Method : SMAA T2x " << std::endl;
                 }
 
                 // Bind to 'AA on' button
@@ -644,18 +672,19 @@ int main()
                     msaa = false;
                     fxaa = false;
                     smaa = false;
+                    smaat2x = false;
                 }
 
                 ImGui::EndTable();
             }
             ImGui::SeparatorText("Temporal AA");
-            if (ImGui::BeginTable("split", 1)) {
+            if (ImGui::BeginTable("split", 2)) {
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("TAA", &taa)) {
-                    currentAA = 1;
+                    currentAA = 4;
+                    outputFile << "AA Method : TAA " << std::endl;
                 }
-
                 // Bind to 'AA on' button
                 if (antiAliasing == false) {
                     taa = false;
@@ -995,34 +1024,11 @@ int main()
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
 
-            if (arrayNum < 16) {
-                if (num % 20 == 0) {
-
-                    printf("num= %i, array= %i\n", num, arrayNum);
-
-                    jitter = (rand() % 200) / 150000.0f;
-                    jitterX_Array[arrayNum] = (sin(num) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
-                    jitterY_Array[arrayNum] = (cos(num) * 0.0001 + (rand() % 2 == 0 ? jitter : -jitter));
-
-                    jitterX = jitterX_Array[arrayNum];
-                    jitterY = jitterY_Array[arrayNum];
-
-                    //printf("x:%f, y;%f\n", jitterX_Array[arrayNum], jitterY_Array[arrayNum]);
-
-                    num++;
-                    arrayNum++;
-
-                    
-                }
-                else {
-                    num++;
-                }
-            }
-
             for (int i = 0; i < 16; i++) {
-
                 jitterX = jitterX_Array[i];
                 jitterY = jitterY_Array[i];
+
+                //printf("x:%f, y;%f\n", jitterX_Array[num], jitterY_Array[num]);
 
                 taaShader.use();
                 taaShader.setFloat("jitterX", jitterX);
@@ -1044,7 +1050,8 @@ int main()
 
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-                
+                jitterX = jitterX_Array[i];
+                jitterY = jitterY_Array[i];
 
                 taaShader.use();
                 taaShader.setFloat("jitterX", jitterX);
