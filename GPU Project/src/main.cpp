@@ -444,7 +444,7 @@ int main()
     // -----------
     fxaaShader.use();
     fxaaShader.setInt("colorTex", 0);
-    //fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+    fxaaShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
 
     // Edge Shader
     // -----------
@@ -550,8 +550,8 @@ int main()
         //printf("array= %i\n", i);
 
         jitter = (rand() % 200) / 1500000.0f;
-        jitterX_Array[i] = (sin(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
-        jitterY_Array[i] = (cos(num) * 0.00001 + (rand() % 2 == 0 ? jitter : -jitter));
+        jitterX_Array[i] = (sin(num) * 0.00002 + (rand() % 2 == 0 ? jitter : -jitter));
+        jitterY_Array[i] = (cos(num) * 0.00002 + (rand() % 2 == 0 ? jitter : -jitter));
 
         jitterX = jitterX_Array[i];
         jitterY = jitterY_Array[i];
@@ -559,7 +559,7 @@ int main()
 
         num++;
 
-        printf("x:%f, y;%f\n", jitterX_Array[i], jitterY_Array[i]);
+        //printf("x:%f, y;%f\n", jitterX_Array[i], jitterY_Array[i]);
     }
     
 
@@ -631,9 +631,25 @@ int main()
                 case 4:
                     smaat2x = true;
                     break;
-                }
-                if (wasTAAOn) {
+                case 5:
                     taa = true;
+                    break;
+                case 6:
+                    msaa = true;
+                    taa = true;
+                    break;
+                case 7:
+                    fxaa = true;
+                    taa = true;
+                    break;
+                case 8:
+                    smaa = true;
+                    taa = true;
+                    break;
+                case 9:
+                    smaat2x = true;
+                    taa = true;
+                    break;
                 }
             }
 
@@ -644,26 +660,22 @@ int main()
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("MSAA", &msaa)) {
                     fxaa = smaa = smaat2x = false;
-                    currentAA = 1;
                     outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("FXAA", &fxaa)) {
                     smaa = msaa = smaat2x = false;
-                    currentAA = 2;
                     outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA", &smaa)) {
                     fxaa = msaa = smaat2x = false;
-                    currentAA = 3;
                     outputFile << "AA Method : SMAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::Checkbox("SMAA T2x", &smaat2x)) {
                     fxaa = msaa = smaa = false;
-                    currentAA = 4;
                     outputFile << "AA Method : SMAA T2x " << std::endl;
                 }
 
@@ -671,15 +683,6 @@ int main()
             }
             ImGui::SeparatorText("Temporal AA");
             if (ImGui::Checkbox("TAA", &taa)) {
-                if (taa) {
-                    wasTAAOn = true;
-                    printf("wasTAAOn = true\n");
-                }
-                else {
-                    wasTAAOn = false;
-                    printf("wasTAAOn = false\n");
-                }
-                
                 outputFile << "AA Method : TAA " << std::endl;
             }
 
@@ -899,6 +902,11 @@ int main()
         }
 
         if (msaa) {
+            currentAA = 1;
+            if (taa) {
+                currentAA = 6;
+            }
+
             glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -917,6 +925,11 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (fxaa) {
+            currentAA = 2;
+            if (taa) {
+                currentAA = 7;
+            }
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -934,6 +947,11 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (smaa) {
+            currentAA = 3;
+            if (taa) {
+                currentAA = 8;
+            }
+
             /* EDGE DETECTION PASS */
             glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
             glDisable(GL_DEPTH_TEST);
@@ -1009,6 +1027,20 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         if (taa) {
+            currentAA = 5;
+            if (msaa) {
+                currentAA = 6;
+            }
+            if (fxaa) {
+                currentAA = 7;
+            }
+            if (smaa) {
+                currentAA = 8;
+            }
+            if (smaat2x) {
+                currentAA = 9;
+            }
+
             //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
             glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -1313,27 +1345,29 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 void changeViewpoint(int view)
 {
-    if (view == 1)
-    {
-        camera.Position = glm::vec3(-35.0f, 10.0f, 0.0f);
-        camera.Yaw = -360.0f;
-        camera.Pitch = -0.5f;
-        camera.ProcessMouseMovement(0, 0);
+    if (!isImage) {
+        if (view == 1)
+        {
+            camera.Position = glm::vec3(-35.0f, 10.0f, 0.0f);
+            camera.Yaw = -360.0f;
+            camera.Pitch = -0.5f;
+            camera.ProcessMouseMovement(0, 0);
 
-    }
-    if (view == 2)
-    {
-        camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
-        camera.Yaw = 111.90;
-        camera.Pitch = -6.60;
-        camera.ProcessMouseMovement(0, 0);
-    }
-    if (view == 3)
-    {
-        camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
-        camera.Yaw = -40.60;
-        camera.Pitch = 33.30;
-        camera.ProcessMouseMovement(0, 0);
+        }
+        if (view == 2)
+        {
+            camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
+            camera.Yaw = 111.90;
+            camera.Pitch = -6.60;
+            camera.ProcessMouseMovement(0, 0);
+        }
+        if (view == 3)
+        {
+            camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
+            camera.Yaw = -40.60;
+            camera.Pitch = 33.30;
+            camera.ProcessMouseMovement(0, 0);
+        }
     }
 }
 
