@@ -63,8 +63,6 @@ void timeChecker(std::ofstream& outputFile, bool& benchActive);
 glm::mat4 globalCurrProj;
 glm::mat4 globalPrevProj;
 
-int num = 0;
-
 // TAA reprojection
 unsigned int temporalFrame = 0;
 bool temporalReproject = false;
@@ -945,34 +943,11 @@ int main()
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
             glClear(GL_COLOR_BUFFER_BIT);
 
-            temporalFrame = (temporalFrame + 1) % 2;
-
             if (temporalFrame == 1) {
                 glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
-
-            glm::vec2 jitter;
-
-            if (msaa || smaat2x) {
-                const glm::vec2 jitters[2] = {
-                      {  0.125f,  0.125f }
-                    , { -0.125f, -0.125f }
-                };
-                jitter = jitters[temporalFrame];
-            }
-            else {
-                const glm::vec2 jitters[2] = {
-                      { -0.25f,  0.25f }
-                    , { 0.25f,  -0.25f }
-                };
-                jitter = jitters[temporalFrame];
-            }
-
-            jitter = jitter * 2.0f * glm::vec2(SCR_WIDTH, SCR_HEIGHT);
-            glm::mat4 jitterMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(jitter, 0.0f));
-            viewProj = jitterMatrix * viewProj;
 
             if (msaa) {
                 currentAA = 6;
@@ -1095,8 +1070,6 @@ int main()
             //printf("x:%f, y;%f\n", jitterX_Array[num], jitterY_Array[num]);
 
             taaShader.use();
-            taaShader.setFloat("jitterX", jitterX);
-            taaShader.setFloat("jitterY", jitterY);
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
@@ -1115,8 +1088,6 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             taaShader.use();
-            taaShader.setFloat("jitterX", jitterX);
-            taaShader.setFloat("jitterY", jitterY);
 
             glBindVertexArray(quadVAO);
             glActiveTexture(GL_TEXTURE0);
