@@ -59,18 +59,25 @@ unsigned int counter = 0;
 std::string frameDisplay;
 void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
-// jittering
-GLuint temporalFrame = 0;
+// global projection variables
+glm::mat4 globalCurrProj;
+glm::mat4 globalPrevProj;
 
 int num = 0;
 
-float jitter = 0.0;
-float jitterX = 0.0;
-float jitterY = 0.0;
+// TAA reprojection
+unsigned int temporalFrame = 0;
+bool temporalReproject = false;
+glm::mat4 currViewProj;
+glm::mat4 prevViewProj;
+float reprojectionWeightScale = 30.0f;
 
-float jitterX_Array[16];
-float jitterY_Array[16];
-
+// jittering
+glm::vec2 jitter;
+const glm::vec2 jitters[2] = {
+    { -0.25f,  0.25f }
+    ,{ 0.25f,  -0.25f }
+};
 
 // detail screen
 float cursorPosX = 0.0;
@@ -138,7 +145,6 @@ struct SMAAParameters
     GLfloat depthThreshold;
     GLint maxSearchSteps;
     GLint maxSearchStepsDiag;
-
     GLint cornerRounding;
     // GLuint  pad0;
     // GLuint  pad1;
@@ -548,26 +554,6 @@ int main()
         return 1;
     }
 
-    // Jittering
-    for (int i = 0; i < 16; i++) {
-
-        num = 0;
-        //printf("array= %i\n", i);
-
-        jitter = (rand() % 200) / 1500000.0f;
-        jitterX_Array[i] = (sin(num) * 0.00002 + (rand() % 2 == 0 ? jitter : -jitter));
-        jitterY_Array[i] = (cos(num) * 0.00002 + (rand() % 2 == 0 ? jitter : -jitter));
-
-        jitterX = jitterX_Array[i];
-        jitterY = jitterY_Array[i];
-
-
-        num++;
-
-        //printf("x:%f, y;%f\n", jitterX_Array[i], jitterY_Array[i]);
-    }
-    
-
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -885,14 +871,35 @@ int main()
         {
             allowMouseInput = true;
             modelShader.use();
-            modelShader.setMat4("projection", projection);
-            modelShader.setMat4("view", view);
 
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-            model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));  // it's a bit too big for our scene, so scale it down
-            modelShader.setMat4("model", model);
-            currentModel.Draw(modelShader);
+            if (!taa)
+            {
+                modelShader.setMat4("projection", projection);
+                modelShader.setMat4("view", view);
+            }
+            else
+            {
+                temporalFrame = (temporalFrame + 1) % 2;
+
+                jitter = jitters[temporalFrame];
+                jitter = jitter * 2.0f * glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT);
+                glm::mat4 jitterMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(jitter, 0.0f));
+                projection = jitterMatrix * projection;
+
+                modelShader.setMat4("projection", globalCurrProj);
+                modelShader.setMat4("view", view);
+
+                prevViewProj = currViewProj;
+                currViewProj = projection;
+                globalCurrProj = currViewProj;
+                globalPrevProj= prevViewProj;
+
+            }
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+                model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));  // it's a bit too big for our scene, so scale it down
+                modelShader.setMat4("model", model);
+                currentModel.Draw(modelShader);
         }
         else
         {
@@ -1405,12 +1412,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
-    // mouse disabled when image is on
-    if (!allowMouseInput)
-    {
-        return;
-    }
-
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
@@ -1432,6 +1433,12 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 
     lastX = xpos;
     lastY = ypos;
+
+    // mouse disabled when image is on
+    if (!allowMouseInput)
+    {
+        return;
+    }
 
     camera.ProcessMouseMovement(xoffset, yoffset);
 }
