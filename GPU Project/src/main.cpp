@@ -59,16 +59,23 @@ unsigned int counter = 0;
 std::string frameDisplay;
 void timeChecker(std::ofstream& outputFile, bool& benchActive);
 
+// global projection variables
+glm::mat4 globalCurrProj;
+glm::mat4 globalPrevProj;
+
+// TAA reprojection
+unsigned int temporalFrame = 0;
+bool temporalReproject = false;
+glm::mat4 currViewProj;
+glm::mat4 prevViewProj;
+float reprojectionWeightScale = 30.0f;
+
 // jittering
-int num = 0;
-
-float jitter = 0.0;
-float jitterX = 0.0;
-float jitterY = 0.0;
-
-float jitterX_Array[16];
-float jitterY_Array[16];
-
+glm::vec2 jitter;
+const glm::vec2 jitters[2] = {
+    { -0.25f,  0.25f }
+    ,{ 0.25f,  -0.25f }
+};
 
 // detail screen
 float cursorPosX = 0.0;
@@ -136,7 +143,6 @@ struct SMAAParameters
     GLfloat depthThreshold;
     GLint maxSearchSteps;
     GLint maxSearchStepsDiag;
-
     GLint cornerRounding;
     // GLuint  pad0;
     // GLuint  pad1;
@@ -543,26 +549,6 @@ int main()
         return 1;
     }
 
-    // Jittering
-    for (int i = 0; i < 16; i++) {
-
-        num = 0;
-        //printf("array= %i\n", i);
-
-        jitter = (rand() % 200) / 1500000.0f;
-        jitterX_Array[i] = (sin(num) * 0.00002 + (rand() % 2 == 0 ? jitter : -jitter));
-        jitterY_Array[i] = (cos(num) * 0.00002 + (rand() % 2 == 0 ? jitter : -jitter));
-
-        jitterX = jitterX_Array[i];
-        jitterY = jitterY_Array[i];
-
-
-        num++;
-
-        //printf("x:%f, y;%f\n", jitterX_Array[i], jitterY_Array[i]);
-    }
-    
-
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -867,13 +853,35 @@ int main()
         {
             allowMouseInput = true;
             modelShader.use();
-            modelShader.setMat4("projection", projection);
-            modelShader.setMat4("view", view);
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-            model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));  // it's a bit too big for our scene, so scale it down
-            modelShader.setMat4("model", model);
-            currentModel.Draw(modelShader);
+
+            if (!taa)
+            {
+                modelShader.setMat4("projection", projection);
+                modelShader.setMat4("view", view);
+            }
+            else
+            {
+                temporalFrame = (temporalFrame + 1) % 2;
+
+                jitter = jitters[temporalFrame];
+                jitter = jitter * 2.0f * glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT);
+                glm::mat4 jitterMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(jitter, 0.0f));
+                projection = jitterMatrix * projection;
+
+                modelShader.setMat4("projection", globalCurrProj);
+                modelShader.setMat4("view", view);
+
+                prevViewProj = currViewProj;
+                currViewProj = projection;
+                globalCurrProj = currViewProj;
+                globalPrevProj= prevViewProj;
+
+            }
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+                model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));  // it's a bit too big for our scene, so scale it down
+                modelShader.setMat4("model", model);
+                currentModel.Draw(modelShader);
         }
         else
         {
@@ -1041,70 +1049,6 @@ int main()
                 currentAA = 9;
             }
 
-            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-            glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-            // clear all relevant buffers
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            for (int i = 0; i < 16; i++) {
-                jitterX = jitterX_Array[i];
-                jitterY = jitterY_Array[i];
-
-                //printf("x:%f, y;%f\n", jitterX_Array[num], jitterY_Array[num]);
-
-                taaShader.use();
-                taaShader.setFloat("jitterX", jitterX);
-                taaShader.setFloat("jitterY", jitterY);
-
-                glBindVertexArray(quadVAO);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, currentTex);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, previousTex);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                jitterX = jitterX_Array[i];
-                jitterY = jitterY_Array[i];
-
-                taaShader.use();
-                taaShader.setFloat("jitterX", jitterX);
-                taaShader.setFloat("jitterY", jitterY);
-
-                glBindVertexArray(quadVAO);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, currentTex);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, previousTex);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
-                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            }
         }
 
 
