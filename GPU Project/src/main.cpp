@@ -1085,8 +1085,24 @@ int main()
                 cursorPosY = cursorPosY;
             }
             else {
-                cursorPosX = lastX;
-                cursorPosY = SCR_HEIGHT - lastY;
+                if (lastX < 50) {
+                    cursorPosX = 50;
+                }
+                else if (lastX > SCR_WIDTH - 70) {
+                    cursorPosX = SCR_WIDTH - 70;
+                }
+                else {
+                    cursorPosX = lastX;
+                }
+                if (lastY < 50) {
+                    cursorPosY = SCR_HEIGHT - 50;
+                }
+                else if (lastY > SCR_HEIGHT - 70) {
+                    cursorPosY = 70;
+                }
+                else {
+                    cursorPosY = SCR_HEIGHT - lastY;
+                }
             }
 
             ImGui::SetNextWindowSize(ImVec2(viewportSize + 10, viewportSize + 70), 0);
