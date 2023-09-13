@@ -93,6 +93,8 @@ static bool smaat2x;
 // default = msaa
 static int currentAA = 1;
 
+static bool temporalAAFirstFrame = true;
+
 static bool isImage;
 
 static bool detailScreen;
@@ -109,6 +111,10 @@ GLuint searchTex;
 
 GLuint currentTex;
 GLuint previousTex;
+GLuint velocityTex;
+
+GLuint Subsample1;
+GLuint Subsample2;
 
 GLuint colorFBO;
 GLuint multisampledFBO;
@@ -118,6 +124,10 @@ GLuint detailFBO;
 
 GLuint currentFBO;
 GLuint previousFBO;
+GLuint velocityFBO;
+
+GLuint Subsample1FBO;
+GLuint Subsample2FBO;
 
 GLuint colorRBO;
 GLuint multiSampledRBO;
@@ -290,12 +300,36 @@ int main()
     glBindTexture(GL_TEXTURE_2D, currentTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glGenTextures(1, &previousTex);
     glBindTexture(GL_TEXTURE_2D, previousTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenTextures(1, &velocityTex);
+    glBindTexture(GL_TEXTURE_2D, velocityTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenTextures(1, &Subsample1);
+    glBindTexture(GL_TEXTURE_2D, Subsample1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenTextures(1, &Subsample2);
+    glBindTexture(GL_TEXTURE_2D, Subsample2);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -406,6 +440,17 @@ int main()
     glGenFramebuffers(1, &previousFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, previousTex, 0);
+    glGenFramebuffers(1, &velocityFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, velocityFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, velocityTex, 0);
+
+    // SMAA2X
+    glGenFramebuffers(1, &Subsample1FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, Subsample1FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Subsample1, 0);
+    glGenFramebuffers(1, &Subsample2FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, Subsample2FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Subsample2, 0);
 
     // Detail
     glGenFramebuffers(1, &detailFBO);
@@ -928,13 +973,18 @@ int main()
         if (antiAliasing && taa) {
             currentAA = 5;
 
-            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+            if (temporalAAFirstFrame) {
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFBO);
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-            //glBindFramebuffer(GL_READ_FRAMEBUFFER, colorFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                temporalAAFirstFrame = false;
+            }
+            else {
+                glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
+            }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, velocityFBO);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -1059,6 +1109,84 @@ int main()
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, colorTex);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, blendTex);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            }
+            if (smaat2x) {
+                currentAA = 9;
+
+                /* EDGE DETECTION PASS */
+                glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
+                glDisable(GL_DEPTH_TEST);
+                // clear all relevant buffers
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                smaaEdgeShader.use();
+                // set SMAA quality
+                smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+                smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+                smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+                smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+                smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+                smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+
+                glBindVertexArray(quadVAO);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, Subsample1); // use the color attachment texture as the texture of the quad plane
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                /* BLENDING WEIGHT PASS */
+                glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
+
+                // clear all relevant buffers
+                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                smaaWeightShader.use();
+                // set SMAA quality
+                smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+                smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+                smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+                smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+                smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+                smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+
+                glBindVertexArray(quadVAO);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, edgeTex);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, areaTex);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, searchTex);
+
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+                glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
+
+                /*
+                /* NEIGHBORHOOD BLENDING PASS */
+                smaaBlendShader.use();
+                // set SMAA quality
+                smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
+                smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
+                smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
+                smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
+                smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
+                smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
+
+                glBindVertexArray(quadVAO);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, Subsample1);
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, blendTex);
 
