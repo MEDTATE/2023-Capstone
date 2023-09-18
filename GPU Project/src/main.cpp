@@ -616,7 +616,7 @@ int main()
             ImGui::SeparatorText("Anti Aliasing");
             if (ImGui::Checkbox("AA On", &antiAliasing))
             {
-                switch (currentAA)
+                switch (currentAA %= 4) // fit the number to switch-loop
                 {
                     // remember which option was activated last time
                 case 0:
@@ -684,6 +684,7 @@ int main()
             // Bind to 'AA on' button
             if (antiAliasing == false)
             {
+                currentAA += 4; // make none of the buttons are selected if AA is off
                 msaa = false;
                 fxaa = false;
                 smaa = false;
