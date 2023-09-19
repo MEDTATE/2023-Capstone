@@ -89,9 +89,9 @@ static bool smaa;
 static bool taa;
 static bool wasTAAOn;
 static bool smaat2x;
-// fxaa = 1, smaa = 2, taa = 3, msaa = 4
+// msaa = 0, fxaa = 1, smaa = 2, taa = 3
 // default = msaa
-static int currentAA = 1;
+static int currentAA = 0;
 
 static bool temporalAAFirstFrame = true;
 
@@ -655,40 +655,24 @@ int main()
             ImGui::SeparatorText("Anti Aliasing");
             if (ImGui::Checkbox("AA On", &antiAliasing))
             {
-                switch (currentAA)
+                switch (currentAA %= 4) // fit the number to switch-loop
                 {
                     // remember which option was activated last time
-                case 1:
+                case 0:
                     msaa = true;
+                    break;
+                case 1:
+                    fxaa = true;
                     break;
                 case 2:
-                    fxaa = true;
+                    smaa = true;
                     break;
                 case 3:
-                    smaa = true;
-                    break;
-                case 4:
                     smaat2x = true;
                     break;
-                case 5:
+                }
+                if (wasTAAOn) {
                     taa = true;
-                    break;
-                case 6:
-                    msaa = true;
-                    taa = true;
-                    break;
-                case 7:
-                    fxaa = true;
-                    taa = true;
-                    break;
-                case 8:
-                    smaa = true;
-                    taa = true;
-                    break;
-                case 9:
-                    smaat2x = true;
-                    taa = true;
-                    break;
                 }
             }
 
@@ -697,23 +681,27 @@ int main()
                 ImGui::TableNextColumn();
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("MSAA", &msaa)) {
+                if (ImGui::RadioButton("MSAA", &currentAA, 0)) {
+                    msaa = true;
                     fxaa = smaa = smaat2x = false;
                     outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("FXAA", &fxaa)) {
+                if (ImGui::RadioButton("FXAA", &currentAA, 1)) {
+                    fxaa = true;
                     smaa = msaa = smaat2x = false;
                     outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("SMAA", &smaa)) {
+                if (ImGui::RadioButton("SMAA", &currentAA, 2)) {
+                    smaa = true;
                     fxaa = msaa = smaat2x = false;
                     outputFile << "AA Method : SMAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
-                if (ImGui::Checkbox("SMAA T2x", &smaat2x)) {
+                if (ImGui::RadioButton("SMAA T2x", &currentAA, 3)) {
+                    smaat2x = true;
                     fxaa = msaa = smaa = false;
                     outputFile << "AA Method : SMAA T2x " << std::endl;
                 }
@@ -722,6 +710,13 @@ int main()
             }
             ImGui::SeparatorText("Temporal AA");
             if (ImGui::Checkbox("TAA", &taa)) {
+                if (taa) {
+                    wasTAAOn = true;
+                }
+                else {
+                    wasTAAOn = false;
+                }
+
                 outputFile << "AA Method : TAA " << std::endl;
                 if (msaa) {
                     outputFile << "AA Method : MSAA + TAA " << std::endl;
@@ -737,6 +732,7 @@ int main()
             // Bind to 'AA on' button
             if (antiAliasing == false)
             {
+                currentAA += 4; // make none of the buttons are selected if AA is off
                 msaa = false;
                 fxaa = false;
                 smaa = false;
@@ -985,7 +981,6 @@ int main()
         }
 
         if (antiAliasing && taa) {
-            currentAA = 5;
 
             /*if (temporalFrame == 1) {
                 glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
@@ -1002,8 +997,6 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
 
             if (msaa) {
-                currentAA = 6;
-
 
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
@@ -1023,7 +1016,6 @@ int main()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             if (fxaa) {
-                currentAA = 7;
 
                 glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
                 glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
@@ -1042,7 +1034,6 @@ int main()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             if (smaa) {
-                currentAA = 8;
 
                 /* EDGE DETECTION PASS */
                 glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
@@ -1151,7 +1142,6 @@ int main()
         else {
             // TAA off
             if (msaa) {
-                currentAA = 1;
 
                 glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFBO);
                 glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
@@ -1171,7 +1161,6 @@ int main()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             if (fxaa) {
-                currentAA = 2;
 
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
                 glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
@@ -1190,7 +1179,6 @@ int main()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             if (smaa) {
-                currentAA = 3;
 
                 /* EDGE DETECTION PASS */
                 glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
@@ -1268,7 +1256,6 @@ int main()
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
             if (smaat2x) {
-                currentAA = 9;
 
                 glBindFramebuffer(GL_FRAMEBUFFER, Subsample1);
                 
@@ -1454,8 +1441,24 @@ int main()
                 cursorPosY = cursorPosY;
             }
             else {
-                cursorPosX = lastX;
-                cursorPosY = SCR_HEIGHT - lastY;
+                if (lastX < 50) {
+                    cursorPosX = 50;
+                }
+                else if (lastX > SCR_WIDTH - 70) {
+                    cursorPosX = SCR_WIDTH - 70;
+                }
+                else {
+                    cursorPosX = lastX;
+                }
+                if (lastY < 50) {
+                    cursorPosY = SCR_HEIGHT - 50;
+                }
+                else if (lastY > SCR_HEIGHT - 70) {
+                    cursorPosY = 70;
+                }
+                else {
+                    cursorPosY = SCR_HEIGHT - lastY;
+                }
             }
 
             ImGui::SetNextWindowSize(ImVec2(viewportSize + 10, viewportSize + 70), 0);

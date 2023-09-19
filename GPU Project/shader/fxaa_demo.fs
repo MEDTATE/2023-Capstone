@@ -1003,4 +1003,6 @@ void main(void)
 {
     vec4 zero = vec4(0.0, 0.0, 0.0, 0.0);
     outColor = FxaaPixelShader(texcoord, zero, colorTex, colorTex, colorTex, screenSize.xy, zero, zero, zero, 0.75, 0.166, 0.0833, 8.0, 0.125, 0.05, zero);
+    // clear alpha value
+    outColor = vec4(outColor.xyz, 1.0);
 }
