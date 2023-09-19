@@ -88,9 +88,7 @@ static bool fxaa;
 static bool smaa;
 static bool taa;
 static bool wasTAAOn;
-static bool smaat2x;
-// msaa = 0, fxaa = 1, smaa = 2, taa = 3
-// default = msaa
+
 static int currentAA = 0;
 
 static bool temporalAAFirstFrame = true;
@@ -127,9 +125,6 @@ GLuint currentFBO;
 GLuint previousFBO;
 GLuint velocityFBO;
 GLuint velocityMSFBO;
-
-GLuint Subsample1FBO;
-GLuint Subsample2FBO;
 
 GLuint colorRBO;
 GLuint multiSampledRBO;
@@ -449,14 +444,6 @@ int main()
     glBindFramebuffer(GL_FRAMEBUFFER, velocityMSFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, velocityTex, 0);
 
-    // SMAA2X
-    glGenFramebuffers(1, &Subsample1FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, Subsample1FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Subsample1, 0);
-    glGenFramebuffers(1, &Subsample2FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, Subsample2FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Subsample2, 0);
-
     // Detail
     glGenFramebuffers(1, &detailFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, detailFBO);
@@ -667,9 +654,6 @@ int main()
                 case 2:
                     smaa = true;
                     break;
-                case 3:
-                    smaat2x = true;
-                    break;
                 }
                 if (wasTAAOn) {
                     taa = true;
@@ -683,27 +667,21 @@ int main()
                 ImGui::TableNextColumn();
                 if (ImGui::RadioButton("MSAA", &currentAA, 0)) {
                     msaa = true;
-                    fxaa = smaa = smaat2x = false;
+                    fxaa = smaa = false;
                     outputFile << "AA Method : MSAA " << std::endl;
                 }
                 ImGui::TableNextColumn();
                 if (ImGui::RadioButton("FXAA", &currentAA, 1)) {
                     fxaa = true;
-                    smaa = msaa = smaat2x = false;
+                    smaa = msaa = false;
                     outputFile << "AA Method : FXAA " << std::endl;
                 }
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 if (ImGui::RadioButton("SMAA", &currentAA, 2)) {
                     smaa = true;
-                    fxaa = msaa = smaat2x = false;
+                    fxaa = msaa = false;
                     outputFile << "AA Method : SMAA " << std::endl;
-                }
-                ImGui::TableNextColumn();
-                if (ImGui::RadioButton("SMAA T2x", &currentAA, 3)) {
-                    smaat2x = true;
-                    fxaa = msaa = smaa = false;
-                    outputFile << "AA Method : SMAA T2x " << std::endl;
                 }
 
                 ImGui::EndTable();
@@ -736,7 +714,6 @@ int main()
                 msaa = false;
                 fxaa = false;
                 smaa = false;
-                smaat2x = false;
                 taa = false;
             }
 
@@ -982,13 +959,6 @@ int main()
 
         if (antiAliasing && taa) {
 
-            /*if (temporalFrame == 1) {
-                glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
-            }
-            else {
-                glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
-            }*/
-
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
@@ -1138,6 +1108,11 @@ int main()
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, previousFBO);
+            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         else {
             // TAA off
@@ -1248,178 +1223,6 @@ int main()
 
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, colorTex);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, blendTex);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            }
-            if (smaat2x) {
-
-                glBindFramebuffer(GL_FRAMEBUFFER, Subsample1);
-                
-                glBindVertexArray(quadVAO);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, colorTex);
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, Subsample2);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
-                glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                /* EDGE DETECTION PASS */
-                glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
-                glDisable(GL_DEPTH_TEST);
-                // clear all relevant buffers
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                smaaEdgeShader.use();
-                // set SMAA quality
-                smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-                smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
-
-                glBindVertexArray(quadVAO);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, Subsample1);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, depthTex);// use the color attachment texture as the texture of the quad plane
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                /* BLENDING WEIGHT PASS */
-                glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
-
-                // clear all relevant buffers
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                smaaWeightShader.use();
-                // set SMAA quality
-                smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-                smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
-
-                glBindVertexArray(quadVAO);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, edgeTex);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, areaTex);
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, searchTex);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                /*
-                /* NEIGHBORHOOD BLENDING PASS */
-                smaaBlendShader.use();
-                // set SMAA quality
-                smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-                smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
-
-                glBindVertexArray(quadVAO);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, Subsample1);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, blendTex);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                // second pass
-
-                /* EDGE DETECTION PASS */
-                glBindFramebuffer(GL_FRAMEBUFFER, edgeFBO);
-                glDisable(GL_DEPTH_TEST);
-                // clear all relevant buffers
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                smaaEdgeShader.use();
-                // set SMAA quality
-                smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaEdgeShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaEdgeShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaEdgeShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaEdgeShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-                smaaEdgeShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
-
-                glBindVertexArray(quadVAO);
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, Subsample2);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, depthTex);// use the color attachment texture as the texture of the quad plane
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                /* BLENDING WEIGHT PASS */
-                glBindFramebuffer(GL_FRAMEBUFFER, blendFBO);
-
-                // clear all relevant buffers
-                glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                smaaWeightShader.use();
-                // set SMAA quality
-                smaaWeightShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaWeightShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaWeightShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaWeightShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaWeightShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-                smaaWeightShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
-
-                glBindVertexArray(quadVAO);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, edgeTex);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, areaTex);
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, searchTex);
-
-                glDrawArrays(GL_TRIANGLES, 0, 6);
-                glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-                glBindFramebuffer(GL_FRAMEBUFFER, currentFBO);
-
-                /*
-                /* NEIGHBORHOOD BLENDING PASS */
-                smaaBlendShader.use();
-                // set SMAA quality
-                smaaBlendShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
-                smaaBlendShader.setFloat("smaaDepthThreshold", smaaPresets[smaaPreset].depthThreshold);
-                smaaBlendShader.setInt("smaaMaxSearchSteps", smaaPresets[smaaPreset].maxSearchSteps);
-                smaaBlendShader.setInt("smaaMaxSearchStepsDiag", smaaPresets[smaaPreset].maxSearchStepsDiag);
-                smaaBlendShader.setInt("smaaCornerRounding", smaaPresets[smaaPreset].cornerRounding);
-                smaaBlendShader.setVec4("screenSize", glm::vec4(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT, SCR_WIDTH, SCR_HEIGHT));
-
-                glBindVertexArray(quadVAO);
-
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, Subsample2);
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, blendTex);
 
