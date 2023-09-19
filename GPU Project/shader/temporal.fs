@@ -504,7 +504,7 @@ uniform float reprojWeigthScale;
  * alternative.
  */
 #ifndef SMAA_REPROJECTION
-#define SMAA_REPROJECTION 0
+#define SMAA_REPROJECTION 1
 #endif
 
 /**
