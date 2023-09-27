@@ -935,8 +935,31 @@ int main()
         {
             allowMouseInput = false;
             imageShader.use();
-            imageShader.setMat4("projection", projection);
-            imageShader.setMat4("view", view);
+
+            if (!taa)
+            {
+                imageShader.setMat4("projection", projection);
+                imageShader.setMat4("view", view);
+            }
+            else
+            {
+                temporalFrame = (temporalFrame + 1) % 2;
+
+                jitter = jitters[temporalFrame];
+                jitter = jitter * 2.0f * glm::vec2(1.0f / SCR_WIDTH, 1.0f / SCR_HEIGHT);
+                glm::mat4 jitterMatrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(jitter, 0.0f));
+                projection = jitterMatrix * projection;
+
+                imageShader.setMat4("projection", globalCurrProj);
+                imageShader.setMat4("view", view);
+
+                prevViewProj = currViewProj;
+                currViewProj = projection;
+                globalCurrProj = currViewProj;
+                globalPrevProj = prevViewProj;
+
+            }
+
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             // render the loaded model
