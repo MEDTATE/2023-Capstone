@@ -496,7 +496,6 @@ int main()
     // -----------
     smaaEdgeShader.use();
     smaaEdgeShader.setInt("colorTex", 0);
-    smaaEdgeShader.setInt("depthTex", 1);
     // smaaEdgeShader.setInt("predicationTex", 0);
 
     smaaEdgeShader.setFloat("smaaThershold", smaaPresets[smaaPreset].threshold);
@@ -875,15 +874,6 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
-        /*if (msaa || smaat2x) {
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, velocityMSFBO);
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, colorFBO);
-            glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        }
-        else {
-            glBindFramebuffer(GL_FRAMEBUFFER, velocityFBO);
-        }*/
-
         glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
 
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
@@ -1046,8 +1036,6 @@ int main()
 
                 glBindVertexArray(quadVAO);
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, depthTex);
-                glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, colorTex); // use the color attachment texture as the texture of the quad plane
                 glDrawArrays(GL_TRIANGLES, 0, 6);
 
