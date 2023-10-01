@@ -692,6 +692,7 @@ int main()
                 }
                 else {
                     wasTAAOn = false;
+                    temporalAAFirstFrame = true;
                 }
 
                 outputFile << "AA Method : TAA " << std::endl;
@@ -970,9 +971,10 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         if (antiAliasing && taa) {
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
