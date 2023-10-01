@@ -675,6 +675,7 @@ int main()
                 }
                 else {
                     wasTAAOn = false;
+                    temporalAAFirstFrame = true;
                 }
 
                 outputFile << "AA Method : TAA " << std::endl;
@@ -952,6 +953,8 @@ int main()
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         if (antiAliasing && wasTAAOn) {
 
