@@ -123,8 +123,6 @@ GLuint detailFBO;
 
 GLuint currentFBO;
 GLuint previousFBO;
-GLuint velocityFBO;
-GLuint velocityMSFBO;
 
 GLuint colorRBO;
 GLuint multiSampledRBO;
@@ -309,14 +307,6 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-    glGenTextures(1, &velocityTex);
-    glBindTexture(GL_TEXTURE_2D, velocityTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
     glGenTextures(1, &Subsample1);
     glBindTexture(GL_TEXTURE_2D, Subsample1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -437,12 +427,6 @@ int main()
     glGenFramebuffers(1, &previousFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, previousFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, previousTex, 0);
-    glGenFramebuffers(1, &velocityFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, velocityFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, velocityTex, 0);
-    glGenFramebuffers(1, &velocityMSFBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, velocityMSFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, velocityTex, 0);
 
     // Detail
     glGenFramebuffers(1, &detailFBO);
@@ -554,7 +538,6 @@ int main()
     taaShader.use();
     taaShader.setInt("currentTex", 0);
     taaShader.setInt("previousTex", 1);
-    taaShader.setInt("velocityTex", 2);
 
     taaShader.setVec4("screenSize", glm::vec4(1.0f / float(SCR_WIDTH), 1.0f / float(SCR_HEIGHT), SCR_WIDTH, SCR_HEIGHT));
 
@@ -973,8 +956,9 @@ int main()
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        if (antiAliasing && taa) {
+        if (antiAliasing && wasTAAOn) {
 
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
             glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
             // clear all relevant buffers
@@ -1105,8 +1089,6 @@ int main()
                 glBindTexture(GL_TEXTURE_2D, currentTex);
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, currentTex);
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, velocityTex);
 
                 temporalAAFirstFrame = false;
             }
@@ -1115,8 +1097,6 @@ int main()
                 glBindTexture(GL_TEXTURE_2D, currentTex);
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, previousTex);
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, velocityTex);
             }
 
             glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -1349,35 +1329,57 @@ int main()
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
+    if (taa && !wasTAAOn) {
+        wasTAAOn = true;
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
 
     float velocity = deltaTime * 5.0f;
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.Position += camera.Up * velocity;
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.Position -= camera.Up * velocity;
-
-    /*
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !fxaa)
-    {
-        fxaa = true;
-        printf("KEY PRESSED!\n");
     }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-    {
-        fxaa = false;
-    }
-    */
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -1423,6 +1425,10 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     float ypos = static_cast<float>(yposIn);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
     {
+        if (taa && !wasTAAOn) {
+            wasTAAOn = true;
+        }
+
         lastX = xpos;
         lastY = ypos;
         return;
@@ -1445,6 +1451,11 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     if (!allowMouseInput)
     {
         return;
+    }
+
+    if (taa && wasTAAOn) {
+        wasTAAOn = false;
+        temporalAAFirstFrame = true;
     }
 
     camera.ProcessMouseMovement(xoffset, yoffset);
@@ -1478,23 +1489,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
         printf("Pos: (%f, %f, %f), POV: (%f, %f)\n", x, y, z, yaw, pitch);
     }
-
-    /*
-    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-    {
-        camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
-        camera.Yaw = 111.90;
-        camera.Pitch = -6.60;
-        camera.ProcessMouseMovement(0, 0);
-    }
-    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
-    {
-        camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
-        camera.Yaw = -40.60;
-        camera.Pitch = 33.30;
-        camera.ProcessMouseMovement(0, 0);
-    }
-    */
 }
 
 void changeViewpoint(int view)
