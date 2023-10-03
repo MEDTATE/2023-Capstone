@@ -1329,25 +1329,57 @@ int main()
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window)
 {
+    if (taa && !wasTAAOn) {
+        wasTAAOn = true;
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    }
 
     float velocity = deltaTime * 5.0f;
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.Position += camera.Up * velocity;
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        if (taa && wasTAAOn) {
+            wasTAAOn = false;
+            temporalAAFirstFrame = true;
+        }
         camera.Position -= camera.Up * velocity;
-
-    wasTAAOn = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -1393,6 +1425,10 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     float ypos = static_cast<float>(yposIn);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
     {
+        if (taa && !wasTAAOn) {
+            wasTAAOn = true;
+        }
+
         lastX = xpos;
         lastY = ypos;
         return;
@@ -1417,9 +1453,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
         return;
     }
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    if (taa && wasTAAOn) {
+        wasTAAOn = false;
+        temporalAAFirstFrame = true;
+    }
 
-    wasTAAOn = false;
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
@@ -1450,23 +1489,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
         printf("Pos: (%f, %f, %f), POV: (%f, %f)\n", x, y, z, yaw, pitch);
     }
-
-    /*
-    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-    {
-        camera.Position = glm::vec3(-1.70f, 7.44f, -7.60f);
-        camera.Yaw = 111.90;
-        camera.Pitch = -6.60;
-        camera.ProcessMouseMovement(0, 0);
-    }
-    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
-    {
-        camera.Position = glm::vec3(-10.09f, 7.89f, -6.09f);
-        camera.Yaw = -40.60;
-        camera.Pitch = 33.30;
-        camera.ProcessMouseMovement(0, 0);
-    }
-    */
 }
 
 void changeViewpoint(int view)
