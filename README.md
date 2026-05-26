@@ -80,10 +80,10 @@ OpenGL 4.5 환경에서 대표적인 Anti-Aliasing 기법 4가지를 직접 구�
 ## 스크린샷
 
 ### 기법 비교 — Sponza Scene
-![Sponza 비교](Benchmarks/Captures/comparison_sponza.png)
+![Sponza 비교](GPU%20Project/Benchmarks/Captures/comparison_sponza.png)
 
 ### 기법 비교 — Container Scene
-![Container 비교](Benchmarks/Captures/comparison_container.png)
+![Container 비교](GPU%20Project/Benchmarks/Captures/comparison_container.png)
 
 ---
 
