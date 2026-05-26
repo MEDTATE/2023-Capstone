@@ -116,12 +116,6 @@
     <None Include="shader\basicScreen.vs">
       <Filter>Shader</Filter>
     </None>
-    <None Include="shader\cmaa.fs">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="shader\cmaa.vs">
-      <Filter>Shader</Filter>
-    </None>
     <None Include="shader\fxaa_demo.fs">
       <Filter>Shader</Filter>
     </None>

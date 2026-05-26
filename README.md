@@ -79,12 +79,22 @@ OpenGL 4.5 환경에서 대표적인 Anti-Aliasing 기법 4가지를 직접 구�
 
 ## 스크린샷
 
-> 추가 예정
+### 기법 비교 — Sponza Scene
+![Sponza 비교](Benchmarks/Captures/comparison_sponza.png)
+
+### 기법 비교 — Container Scene
+![Container 비교](Benchmarks/Captures/comparison_container.png)
 
 ---
 
 ## 참고 자료
 
 - [SMAA 논문 (Jimenez et al., 2012)](http://www.iryoku.com/smaa/)
+- [FXAA - NVIDIA GameWorks Graphics Samples](https://github.com/ahcox/NVIDIA-GameWorks-Graphics-Samples-GL4-GLES2-GLES3-Vulkan-SDK-3-16-August-2017-36-Commits)
+- [Temporal Anti-Aliasing(TAA) Tutorial - Sugu Lee](https://sugulee.wordpress.com/2021/06/21/temporal-anti-aliasingtaa-tutorial/)
 - [LearnOpenGL](https://learnopengl.com)
 - [Dear ImGui](https://github.com/ocornut/imgui)
+- [GLFW](https://github.com/glfw/glfw)
+- [GLM](https://github.com/g-truc/glm)
+- [stb_image](https://github.com/nothings/stb)
+- [Assimp](https://github.com/assimp/assimp)
