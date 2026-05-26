@@ -154,8 +154,12 @@
     <ClCompile Include="include\imgui\imgui_stdlib.cpp" />
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\AAPass.cpp" />
+    <ClCompile Include="src\FramebufferManager.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\InputHandler.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\UIPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ImageShader.fs" />
@@ -193,6 +197,10 @@
     <ClInclude Include="include\renderer\OpenGLRenderer.h" />
     <ClInclude Include="include\renderer\Renderer.h" />
     <ClInclude Include="include\SearchTex.h" />
+    <ClInclude Include="src\AAPass.h" />
+    <ClInclude Include="src\FramebufferManager.h" />
+    <ClInclude Include="src\InputHandler.h" />
+    <ClInclude Include="src\UIPanel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,8 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\glad.c" />
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
@@ -26,6 +24,24 @@
     </ClCompile>
     <ClCompile Include="include\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\glad.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FramebufferManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AAPass.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UIPanel.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InputHandler.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -73,6 +89,18 @@
     </ClInclude>
     <ClInclude Include="include\glew\include\GL\glew.h">
       <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FramebufferManager.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AAPass.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UIPanel.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\InputHandler.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +168,9 @@
     </Filter>
     <Filter Include="Shader">
       <UniqueIdentifier>{97417180-e818-40c7-bc4c-9f3ed53abc44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{3b58b4b0-fdef-4b4b-aecb-e90a7b36b15a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
